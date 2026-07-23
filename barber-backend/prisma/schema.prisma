@@ -1,0 +1,145 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  OWNER
+  ADMIN
+  BARBER
+}
+
+model Barbershop {
+  id        String  @id @default(uuid())
+  slug      String  @unique
+  name      String
+  phone     String?
+  whatsapp  String?
+  openTime  String // Ex: "09:00"
+  closeTime String // Ex: "19:00"
+
+  users        UserBarbershop[]
+  barbers      Barber[]
+  services     Service[]
+  clients      Client[]
+  appointments Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model User {
+  id       String @id @default(uuid())
+  name     String
+  email    String @unique
+  password String
+
+  memberships  UserBarbershop[]
+  isSuperAdmin Boolean          @default(false)
+
+  // Se o usuário for um barbeiro, ele estará linkado ao perfil dele
+  barberId String? @unique
+  barber   Barber? @relation(fields: [barberId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model UserBarbershop {
+  userId       String
+  barbershopId String
+  role         Role   @default(ADMIN)
+
+  user       User       @relation(fields: [userId], references: [id], onDelete: Cascade)
+  barbershop Barbershop @relation(fields: [barbershopId], references: [id], onDelete: Cascade)
+
+  @@id([userId, barbershopId]) // Chave primária composta
+}
+
+model Barber {
+  id        String  @id @default(uuid())
+  name      String
+  phone     String?
+  whatsapp  String?
+  openTime  String
+  closeTime String
+  status    Boolean @default(true) // true = Ativo, false = Inativo
+
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
+
+  user         User? // Relacionamento reverso com User
+  appointments Appointment[]
+  services     Service[] // Serviços pertencentes a este barbeiro
+  clients      Client[] // Clientes pertencentes a este barbeiro
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Service {
+  id       String  @id @default(uuid())
+  name     String
+  price    Decimal @db.Decimal(10, 2)
+  duration Int // Duração em minutos
+
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
+
+  barberId String? // Opcional: Se nulo, é um serviço global da barbearia
+  barber   Barber? @relation(fields: [barberId], references: [id])
+
+  appointments Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Client {
+  id       String  @id @default(uuid())
+  name     String
+  phone    String
+  whatsapp String?
+  notes    String? @db.Text
+
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
+
+  barberId String? // Opcional: Se nulo, é um cliente global (do Admin)
+  barber   Barber? @relation(fields: [barberId], references: [id])
+
+  appointments Appointment[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([phone, barbershopId])
+}
+
+model Appointment {
+  id        String   @id @default(uuid())
+  date      DateTime @db.Date
+  startTime String // Ex: "14:00"
+  endTime   String // Ex: "14:30"
+  price     Decimal  @db.Decimal(10, 2)
+  status    String   @default("AGENDADO")
+
+  clientId String
+  client   Client @relation(fields: [clientId], references: [id])
+
+  barberId String
+  barber   Barber @relation(fields: [barberId], references: [id])
+
+  serviceId String
+  service   Service @relation(fields: [serviceId], references: [id])
+
+  barbershopId String
+  barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
