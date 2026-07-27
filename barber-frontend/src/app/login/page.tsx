@@ -14,10 +14,15 @@ import {
   Input,
   Stack,
   useToast,
+  Image,
 } from "@chakra-ui/react";
 import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
+
+const BRAND_COLOR = "#904D22";
+const BRAND_HOVER = "#733c19";
+const BRAND_LIGHT = "#FDF8F5";
 
 const loginSchema = z.object({
   email: z
@@ -32,7 +37,7 @@ type LoginFormData = z.infer<typeof loginSchema>;
 export default function LoginPage() {
   const { signIn } = useAuth();
   const toast = useToast();
-  const router = useRouter(); // Adicionado para fazer o redirecionamento
+  const router = useRouter();
 
   const {
     register,
@@ -43,29 +48,17 @@ export default function LoginPage() {
   });
 
   const { mutateAsync: handleLogin, isPending } = useMutation({
-    // A mutation agora apenas repassa os dados para o Contexto
     mutationFn: async (data: LoginFormData) => {
       await signIn(data);
     },
     onSuccess: () => {
-      // Como o contexto já salvou o token, agora é só avisar e redirecionar
       toast({
         title: "Login realizado com sucesso!",
         status: "success",
         duration: 2000,
         position: "top-right",
       });
-      router.push("/dashboard"); // Redireciona para a página interna
-    },
-    onError: () => {
-      toast({
-        title: "Erro de autenticação",
-        description: "E-mail ou senha inválidos.",
-        status: "error",
-        duration: 3000,
-        isClosable: true,
-        position: "top-right",
-      });
+      router.push("/agenda");
     },
   });
 
@@ -74,38 +67,63 @@ export default function LoginPage() {
   };
 
   return (
-    <Flex minH="100vh" align="center" justify="center" bg="gray.50">
+    <Flex minH="100vh" align="center" justify="center" bg={BRAND_LIGHT}>
       <Box
         p={8}
         maxWidth="400px"
         borderWidth={1}
-        borderRadius={8}
+        borderRadius="xl"
         boxShadow="lg"
         bg="white"
         w="100%"
+        borderColor="gray.100"
       >
         <Stack spacing={4} mb={6} align="center">
-          <Heading fontSize="2xl">Barber SaaS</Heading>
-          <Box color="gray.500">Faça login para gerenciar sua barbearia</Box>
+          <Image
+            src="/ProximoCorteLogo.png"
+            alt="PróximoCorte"
+            h="240px"
+            objectFit="contain"
+            fallback={
+              <Heading fontSize="2xl" color="#3D3D3D">
+                PróximoCorte
+              </Heading>
+            }
+          />
+          <Box color="gray.500" fontSize="sm">
+            Faça login para gerenciar sua barbearia
+          </Box>
         </Stack>
 
         <form onSubmit={handleSubmit(onSubmit)}>
-          <Stack spacing={4}>
+          <Stack spacing={5}>
             <FormControl isInvalid={!!errors.email}>
-              <FormLabel>E-mail</FormLabel>
+              <FormLabel color="gray.700" fontWeight="medium">
+                E-mail
+              </FormLabel>
               <Input
                 type="email"
                 placeholder="admin@barbearia.com"
+                _focus={{
+                  borderColor: BRAND_COLOR,
+                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                }}
                 {...register("email")}
               />
               <FormErrorMessage>{errors.email?.message}</FormErrorMessage>
             </FormControl>
 
             <FormControl isInvalid={!!errors.password}>
-              <FormLabel>Senha</FormLabel>
+              <FormLabel color="gray.700" fontWeight="medium">
+                Senha
+              </FormLabel>
               <Input
                 type="password"
                 placeholder="********"
+                _focus={{
+                  borderColor: BRAND_COLOR,
+                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                }}
                 {...register("password")}
               />
               <FormErrorMessage>{errors.password?.message}</FormErrorMessage>
@@ -113,7 +131,9 @@ export default function LoginPage() {
 
             <Button
               type="submit"
-              colorScheme="blue"
+              bg={BRAND_COLOR}
+              color="white"
+              _hover={{ bg: BRAND_HOVER }}
               size="lg"
               fontSize="md"
               isLoading={isPending}

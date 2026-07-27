@@ -12,57 +12,60 @@ import {
   Tr,
   Th,
   Td,
-  Badge,
-  VStack,
-  Divider,
   IconButton,
   HStack,
-  Spinner,
-  Center,
+  useDisclosure,
   Avatar,
+  Switch,
+  useToast,
 } from "@chakra-ui/react";
 import { Plus, MoreHorizontal } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { api } from "@/lib/api";
+import { Barber, BarberModal } from "@/components/BarberModal";
 
-// Tipagem do Barbeiro que vem do Backend
-interface Barber {
-  id: string;
-  name: string;
-  phone: string | null;
-  whatsapp: string | null;
-  openTime: string;
-  closeTime: string;
-}
+const BRAND_COLOR = "#904D22";
+const BRAND_HOVER = "#733c19";
 
 export default function BarbeirosPage() {
-  // Chamada à API utilizando o React Query
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [selectedBarber, setSelectedBarber] = useState<Barber | null>(null);
+  const toast = useToast();
+  const queryClient = useQueryClient();
+
   const {
     data: barbers = [],
     isLoading,
     isError,
   } = useQuery<Barber[]>({
     queryKey: ["barbers"],
-    queryFn: async () => {
-      const response = await api.get("/barbers");
-      return response.data;
-    },
+    queryFn: async () => (await api.get("/barbers")).data,
   });
 
-  // Função simples para formatar o telefone (Ex: 11999999999 -> (11) 99999-9999)
-  const formatPhone = (phone: string | null) => {
-    if (!phone) return "-";
-    const cleaned = ("" + phone).replace(/\D/g, "");
-    const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/);
-    if (match) {
-      return `(${match[1]}) ${match[2]}-${match[3]}`;
-    }
-    return phone;
-  };
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: boolean }) =>
+      api.patch(`/barbers/${id}`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["barbers"] });
+      toast({
+        title: "Status atualizado!",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
+    },
+    onError: () =>
+      toast({
+        title: "Erro ao atualizar status.",
+        status: "error",
+        duration: 3000,
+        isClosable: true,
+      }),
+  });
 
   return (
     <Box>
-      {/* Cabeçalho da Página */}
       <Flex
         direction={{ base: "column", sm: "row" }}
         justify="space-between"
@@ -72,18 +75,26 @@ export default function BarbeirosPage() {
       >
         <Box>
           <Heading size="lg" color="gray.900">
-            Barbeiros
+            Equipe
           </Heading>
           <Text color="gray.500" mt={1}>
-            Gerencie a equipe e horários de atendimento
+            Gerencie os barbeiros e seus horários
           </Text>
         </Box>
-        <Button size="sm" colorScheme="blue" leftIcon={<Plus size={16} />}>
+        <Button
+          size="sm"
+          bg={BRAND_COLOR}
+          color="white"
+          _hover={{ bg: BRAND_HOVER }}
+          leftIcon={<Plus size={16} />}
+          onClick={() => {
+            setSelectedBarber(null);
+            onOpen();
+          }}
+        >
           Novo barbeiro
         </Button>
       </Flex>
-
-      {/* Container Principal */}
       <Box
         bg="white"
         borderRadius="xl"
@@ -92,67 +103,51 @@ export default function BarbeirosPage() {
         shadow="sm"
         overflow="hidden"
       >
-        {/* Loading State */}
-        {isLoading && (
-          <Center p={10}>
-            <Spinner color="blue.500" size="xl" />
-          </Center>
-        )}
-
-        {/* Error State */}
-        {isError && (
-          <Center p={10}>
-            <Text color="red.500">
-              Erro ao carregar os barbeiros. Tente novamente.
-            </Text>
-          </Center>
-        )}
-
-        {/* Lista de Barbeiros */}
         {!isLoading && !isError && (
           <>
-            {/* === VISÃO DESKTOP (Tabela) === */}
             <Box display={{ base: "none", md: "block" }} overflowX="auto">
               <Table variant="simple" size="md">
                 <Thead bg="gray.50">
                   <Tr>
                     <Th>Profissional</Th>
-                    <Th>Contato</Th>
-                    <Th>Expediente</Th>
+                    <Th>E-mail</Th>
+                    <Th>Horário</Th>
                     <Th>Status</Th>
                     <Th></Th>
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {barbers.map((barber) => (
-                    <Tr key={barber.id} _hover={{ bg: "gray.50" }}>
+                  {barbers.map((b) => (
+                    <Tr key={b.id} _hover={{ bg: "gray.50" }}>
                       <Td>
                         <HStack spacing={3}>
                           <Avatar
                             size="sm"
-                            name={barber.name}
-                            bg="blue.500"
+                            name={b.name}
+                            bg={BRAND_COLOR}
                             color="white"
                           />
                           <Text fontWeight="medium" color="gray.900">
-                            {barber.name}
+                            {b.name}
                           </Text>
                         </HStack>
                       </Td>
-                      <Td color="gray.600">{formatPhone(barber.phone)}</Td>
+                      <Td color="gray.600">{b.email || "Não informado"}</Td>
                       <Td color="gray.600">
-                        {barber.openTime} - {barber.closeTime}
+                        {b.openTime} às {b.closeTime}
                       </Td>
                       <Td>
-                        <Badge
+                        <Switch
                           colorScheme="green"
-                          variant="subtle"
-                          px={2}
-                          py={0.5}
-                          borderRadius="md"
-                        >
-                          Ativo
-                        </Badge>
+                          isChecked={b.status}
+                          onChange={(e) =>
+                            toggleStatusMutation.mutate({
+                              id: b.id,
+                              status: e.target.checked,
+                            })
+                          }
+                          isDisabled={toggleStatusMutation.isPending}
+                        />
                       </Td>
                       <Td textAlign="right">
                         <IconButton
@@ -161,96 +156,21 @@ export default function BarbeirosPage() {
                           size="sm"
                           variant="ghost"
                           color="gray.400"
+                          onClick={() => {
+                            setSelectedBarber(b);
+                            onOpen();
+                          }}
                         />
                       </Td>
                     </Tr>
                   ))}
-
-                  {barbers.length === 0 && (
-                    <Tr>
-                      <Td
-                        colSpan={5}
-                        textAlign="center"
-                        py={6}
-                        color="gray.500"
-                      >
-                        Nenhum profissional encontrado.
-                      </Td>
-                    </Tr>
-                  )}
                 </Tbody>
               </Table>
-            </Box>
-
-            {/* === VISÃO MOBILE (Lista) === */}
-            <Box display={{ base: "block", md: "none" }}>
-              <VStack align="stretch" spacing={0} divider={<Divider />}>
-                {barbers.map((barber) => (
-                  <Box key={barber.id} p={4}>
-                    <Flex align="center" justify="space-between" mb={2}>
-                      <HStack spacing={3}>
-                        <Avatar
-                          size="sm"
-                          name={barber.name}
-                          bg="blue.500"
-                          color="white"
-                        />
-                        <Box>
-                          <Text
-                            fontSize="sm"
-                            fontWeight="semibold"
-                            color="gray.900"
-                          >
-                            {barber.name}
-                          </Text>
-                          <Text fontSize="xs" color="gray.500">
-                            {formatPhone(barber.phone)}
-                          </Text>
-                        </Box>
-                      </HStack>
-                      <IconButton
-                        aria-label="Opções"
-                        icon={<MoreHorizontal size={16} />}
-                        size="sm"
-                        variant="ghost"
-                        color="gray.400"
-                      />
-                    </Flex>
-
-                    <Flex
-                      align="center"
-                      justify="space-between"
-                      mt={3}
-                      bg="gray.50"
-                      p={2}
-                      borderRadius="md"
-                    >
-                      <Text fontSize="xs" color="gray.600">
-                        {barber.openTime} às {barber.closeTime}
-                      </Text>
-                      <Badge
-                        colorScheme="green"
-                        variant="subtle"
-                        px={2}
-                        py={0.5}
-                        borderRadius="md"
-                      >
-                        Ativo
-                      </Badge>
-                    </Flex>
-                  </Box>
-                ))}
-
-                {barbers.length === 0 && (
-                  <Box p={6} textAlign="center" color="gray.500">
-                    Nenhum profissional encontrado.
-                  </Box>
-                )}
-              </VStack>
             </Box>
           </>
         )}
       </Box>
+      <BarberModal isOpen={isOpen} onClose={onClose} barber={selectedBarber} />
     </Box>
   );
 }

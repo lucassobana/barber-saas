@@ -1,18 +1,17 @@
-import axios from 'axios';
-import Cookies from 'js-cookie'; // Importamos o js-cookie
+import axios from "axios";
+import { parseCookies } from "nookies"; // Usando nookies para padronizar
 
 export const api = axios.create({
-  baseURL: 'http://localhost:3333', // URL do nosso backend NestJS
+  baseURL: process.env.NEXT_PUBLIC_API_URL || "http://localhost:3333",
 });
 
-// Interceptor: Antes de qualquer requisição sair, ele injeta o Token JWT
 api.interceptors.request.use((config) => {
-  // Agora lemos o token do Cookie, exatamente como no seu layout!
-  const token = Cookies.get('barber_token'); 
-  
-  if (token) {
+  // Lemos o token com a mesma chave salva no AuthContext
+  const { "@BarberSaaS:token": token } = parseCookies();
+
+  if (token && config.headers) {
     config.headers.Authorization = `Bearer ${token}`;
   }
-  
+
   return config;
 });

@@ -1,4 +1,4 @@
-import { Controller, Get, Post, Body, Param } from '@nestjs/common';
+import { Controller, Get, Post, Body, Param, Query } from '@nestjs/common';
 import { PublicService } from './public.service';
 import { CreatePublicAppointmentDto } from './dto/create-public.dto';
 
@@ -10,6 +10,15 @@ export class PublicController {
   @Get('barbershops/:slug')
   getBarbershop(@Param('slug') slug: string) {
     return this.publicService.getBarbershopBySlug(slug);
+  }
+
+  @Get('availability')
+  getAvailability(
+    @Query('barberId') barberId: string,
+    @Query('date') date: string,
+    @Query('serviceId') serviceId: string,
+  ) {
+    return this.publicService.getAvailableTimes(barberId, date, serviceId);
   }
 
   // POST http://localhost:3000/public/appointments

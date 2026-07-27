@@ -23,7 +23,6 @@ async function main() {
       name: 'Barbearia Seed',
       slug: 'barbearia-seed', // <-- Adicionamos o slug exigido
       phone: '11999999999',
-      whatsapp: '11999999999',
       openTime: '09:00',
       closeTime: '19:00',
     },

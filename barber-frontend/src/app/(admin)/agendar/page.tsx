@@ -20,10 +20,24 @@ import {
   Flex,
   Divider,
   Icon,
+  Image,
 } from "@chakra-ui/react";
-import { Scissors, Calendar, Clock, User, Phone } from "lucide-react";
+import {
+  Scissors,
+  Calendar,
+  Clock,
+  User,
+  Phone,
+  CheckCircle,
+} from "lucide-react";
 import { api } from "@/lib/api";
 import { AxiosError } from "axios";
+
+// === CORES DA MARCA (PróximoCorte) ===
+const BRAND_COLOR = "#904D22";
+const BRAND_HOVER = "#733c19";
+const BRAND_LIGHT = "#FDF8F5";
+const TEXT_DARK = "#3D3D3D";
 
 // --- Tipagens ---
 interface Service {
@@ -39,6 +53,9 @@ interface Barber {
 interface Barbershop {
   id: string;
   name: string;
+  openTime: string;
+  closeTime: string;
+  openDays?: string[];
   services: Service[];
   barbers: Barber[];
 }
@@ -64,19 +81,17 @@ const formatPrice = (price: string) =>
   new Intl.NumberFormat("pt-BR", { style: "currency", currency: "BRL" }).format(
     Number(price),
   );
+
 const calculateEndTime = (startTime: string, durationMinutes: number) => {
   if (!startTime) return "";
   const [hours, minutes] = startTime.split(":").map(Number);
   const date = new Date();
   date.setHours(hours, minutes, 0, 0);
   date.setMinutes(date.getMinutes() + durationMinutes);
-  return `${String(date.getHours()).padStart(2, "0")}:${String(date.getMinutes()).padStart(2, "0")}`;
+  return `${String(date.getHours()).padStart(2, "0")}:${String(
+    date.getMinutes(),
+  ).padStart(2, "0")}`;
 };
-const TIME_SLOTS = Array.from({ length: 23 }, (_, i) => {
-  const hour = Math.floor(i / 2) + 8;
-  const minute = i % 2 === 0 ? "00" : "30";
-  return `${String(hour).padStart(2, "0")}:${minute}`;
-});
 
 export default function PublicBookingPage() {
   const params = useParams();
@@ -89,7 +104,7 @@ export default function PublicBookingPage() {
   const [date, setDate] = useState("");
   const [startTime, setStartTime] = useState("");
   const [clientName, setClientName] = useState("");
-  const [clientPhone, setClientPhone] = useState(""); // WhatsApp
+  const [clientPhone, setClientPhone] = useState("");
   const [isSuccess, setIsSuccess] = useState(false);
 
   // --- Buscas na API Pública ---
@@ -102,6 +117,40 @@ export default function PublicBookingPage() {
     queryFn: async () => (await api.get(`/public/barbershops/${slug}`)).data,
     enabled: !!slug,
   });
+
+  // --- LÓGICA DINÂMICA DE HORÁRIOS ---
+  const isDayOpen = () => {
+    if (!date || !barbershop?.openDays) return true;
+    const dayOfWeek = new Date(`${date}T00:00:00`).getDay().toString();
+    return barbershop.openDays.includes(dayOfWeek);
+  };
+
+  const isOpen = isDayOpen();
+
+  const generateAvailableSlots = () => {
+    if (!barbershop?.openTime || !barbershop?.closeTime) return [];
+
+    const slots = [];
+    const [openH, openM] = barbershop.openTime.split(":").map(Number);
+    const [closeH, closeM] = barbershop.closeTime.split(":").map(Number);
+
+    const current = new Date();
+    current.setHours(openH, openM, 0, 0);
+    const end = new Date();
+    end.setHours(closeH, closeM, 0, 0);
+
+    while (current < end) {
+      slots.push(
+        `${String(current.getHours()).padStart(2, "0")}:${String(
+          current.getMinutes(),
+        ).padStart(2, "0")}`,
+      );
+      current.setMinutes(current.getMinutes() + 30);
+    }
+    return slots;
+  };
+
+  const timeSlots = generateAvailableSlots();
 
   // --- Mutação de Agendamento ---
   const bookMutation = useMutation({
@@ -161,24 +210,24 @@ export default function PublicBookingPage() {
     });
   };
 
-  // --- Renderização de Loading / Erro ---
   if (isLoading)
     return (
-      <Center h="100vh" bg="gray.50">
-        <Spinner size="xl" color="blue.500" />
+      <Center h="100vh" bg={BRAND_LIGHT}>
+        <Spinner size="xl" color={BRAND_COLOR} thickness="4px" />
       </Center>
     );
   if (isError || !barbershop)
     return (
-      <Center h="100vh" bg="gray.50">
-        <Text color="red.500">Barbearia não encontrada.</Text>
+      <Center h="100vh" bg={BRAND_LIGHT}>
+        <Text color="red.500" fontWeight="medium">
+          Barbearia não encontrada.
+        </Text>
       </Center>
     );
 
-  // --- Tela de Sucesso ---
   if (isSuccess) {
     return (
-      <Center h="100vh" bg="gray.50" p={4}>
+      <Center h="100vh" bg={BRAND_LIGHT} p={4}>
         <VStack
           spacing={6}
           bg="white"
@@ -188,11 +237,13 @@ export default function PublicBookingPage() {
           textAlign="center"
           maxW="md"
           w="full"
+          borderTopWidth="4px"
+          borderColor={BRAND_COLOR}
         >
-          <Center w={16} h={16} bg="green.100" borderRadius="full">
-            <Icon as={Calendar} size={32} color="green.500" />
+          <Center w={16} h={16} bg="#F3EAE3" borderRadius="full">
+            <Icon as={CheckCircle} size={32} color={BRAND_COLOR} />
           </Center>
-          <Heading size="lg" color="gray.900">
+          <Heading size="lg" color={TEXT_DARK}>
             Tudo Certo!
           </Heading>
           <Text color="gray.600">
@@ -201,8 +252,11 @@ export default function PublicBookingPage() {
           </Text>
           <Button
             w="full"
-            colorScheme="blue"
+            bg={BRAND_COLOR}
+            color="white"
+            _hover={{ bg: BRAND_HOVER }}
             mt={4}
+            size="lg"
             onClick={() => window.location.reload()}
           >
             Fazer outro agendamento
@@ -212,36 +266,67 @@ export default function PublicBookingPage() {
     );
   }
 
-  // --- Tela Principal de Agendamento ---
   const selectedService = barbershop.services.find((s) => s.id === serviceId);
 
   return (
-    <Box minH="100vh" bg="gray.50" py={10} px={4}>
-      <Container maxW="md" bg="white" p={6} borderRadius="xl" shadow="sm">
+    <Box minH="100vh" bg={BRAND_LIGHT} py={10} px={4}>
+      <Container
+        maxW="md"
+        bg="white"
+        p={8}
+        borderRadius="2xl"
+        shadow="lg"
+        borderWidth="1px"
+        borderColor="gray.100"
+      >
         <VStack spacing={6} align="stretch">
-          {/* Header */}
-          <Box textAlign="center" mb={2}>
-            <Heading size="xl" color="gray.900">
-              {barbershop.name}
+          {/* HEADER COM A LOGO */}
+          <Box textAlign="center" mb={4}>
+            <Flex justify="center" mb={6}>
+              <Image
+                src="/ProximoCorteLogo.png"
+                alt="Logo PróximoCorte"
+                h="160px"
+                objectFit="contain"
+                fallback={
+                  <Heading size="lg" color={TEXT_DARK}>
+                    PróximoCorte
+                  </Heading>
+                }
+              />
+            </Flex>
+
+            <Heading size="md" color={TEXT_DARK} mb={2}>
+              Agendamento - {barbershop.name}
             </Heading>
-            <Text color="gray.500" mt={2}>
-              Agende seu horário de forma rápida e fácil.
+            <Text color="gray.500" fontSize="sm">
+              Preencha os dados abaixo para reservar o seu horário.
             </Text>
           </Box>
 
-          <Divider />
+          <Divider borderColor="gray.200" />
 
-          {/* Passo 1: O que e Com Quem */}
-          <VStack spacing={4} align="stretch">
+          <VStack spacing={5} align="stretch">
             <FormControl isRequired>
-              <FormLabel display="flex" alignItems="center" gap={2}>
-                <Icon as={Scissors} size={16} /> Serviço
+              <FormLabel
+                display="flex"
+                alignItems="center"
+                gap={2}
+                color={TEXT_DARK}
+                fontWeight="semibold"
+              >
+                <Icon as={Scissors} size={18} color={BRAND_COLOR} /> Serviço
               </FormLabel>
               <Select
                 placeholder="Escolha um serviço"
                 value={serviceId}
                 onChange={(e) => setServiceId(e.target.value)}
                 bg="gray.50"
+                borderColor="gray.200"
+                _focus={{
+                  borderColor: BRAND_COLOR,
+                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                }}
               >
                 {barbershop.services.map((s) => (
                   <option key={s.id} value={s.id}>
@@ -252,14 +337,25 @@ export default function PublicBookingPage() {
             </FormControl>
 
             <FormControl isRequired>
-              <FormLabel display="flex" alignItems="center" gap={2}>
-                <Icon as={User} size={16} /> Profissional
+              <FormLabel
+                display="flex"
+                alignItems="center"
+                gap={2}
+                color={TEXT_DARK}
+                fontWeight="semibold"
+              >
+                <Icon as={User} size={18} color={BRAND_COLOR} /> Profissional
               </FormLabel>
               <Select
                 placeholder="Escolha o barbeiro"
                 value={barberId}
                 onChange={(e) => setBarberId(e.target.value)}
                 bg="gray.50"
+                borderColor="gray.200"
+                _focus={{
+                  borderColor: BRAND_COLOR,
+                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                }}
               >
                 {barbershop.barbers.map((b) => (
                   <option key={b.id} value={b.id}>
@@ -270,54 +366,98 @@ export default function PublicBookingPage() {
             </FormControl>
           </VStack>
 
-          {/* Passo 2: Quando */}
-          <Flex gap={4}>
+          <Flex gap={4} mt={2}>
             <FormControl isRequired>
-              <FormLabel display="flex" alignItems="center" gap={2}>
-                <Icon as={Calendar} size={16} /> Data
+              <FormLabel
+                display="flex"
+                alignItems="center"
+                gap={2}
+                color={TEXT_DARK}
+                fontWeight="semibold"
+              >
+                <Icon as={Calendar} size={18} color={BRAND_COLOR} /> Data
               </FormLabel>
               <Input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 bg="gray.50"
+                borderColor="gray.200"
+                _focus={{
+                  borderColor: BRAND_COLOR,
+                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                }}
               />
             </FormControl>
             <FormControl isRequired>
-              <FormLabel display="flex" alignItems="center" gap={2}>
-                <Icon as={Clock} size={16} /> Hora
+              <FormLabel
+                display="flex"
+                alignItems="center"
+                gap={2}
+                color={TEXT_DARK}
+                fontWeight="semibold"
+              >
+                <Icon as={Clock} size={18} color={BRAND_COLOR} /> Hora
               </FormLabel>
               <Select
                 placeholder="Horário"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
                 bg="gray.50"
+                borderColor="gray.200"
+                _focus={{
+                  borderColor: BRAND_COLOR,
+                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                }}
+                isDisabled={!isOpen || !date}
               >
-                {TIME_SLOTS.map((t) => (
+                {timeSlots.map((t) => (
                   <option key={t} value={t}>
                     {t}
                   </option>
                 ))}
               </Select>
+              {!isOpen && date && (
+                <Text
+                  color="red.500"
+                  fontSize="xs"
+                  mt={1.5}
+                  fontWeight="medium"
+                >
+                  Fechado neste dia.
+                </Text>
+              )}
             </FormControl>
           </Flex>
 
-          <Divider />
+          <Divider borderColor="gray.200" mt={2} mb={2} />
 
-          {/* Passo 3: Seus Dados */}
-          <VStack spacing={4} align="stretch">
+          <VStack spacing={5} align="stretch">
             <FormControl isRequired>
-              <FormLabel>Seu Nome</FormLabel>
+              <FormLabel color={TEXT_DARK} fontWeight="semibold">
+                Seu Nome
+              </FormLabel>
               <Input
                 placeholder="Ex: João Silva"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
                 bg="gray.50"
+                borderColor="gray.200"
+                _focus={{
+                  borderColor: BRAND_COLOR,
+                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                }}
               />
             </FormControl>
             <FormControl isRequired>
-              <FormLabel display="flex" alignItems="center" gap={2}>
-                <Icon as={Phone} size={16} /> WhatsApp
+              <FormLabel
+                display="flex"
+                alignItems="center"
+                gap={2}
+                color={TEXT_DARK}
+                fontWeight="semibold"
+              >
+                <Icon as={Phone} size={18} color={BRAND_COLOR} /> WhatsApp
               </FormLabel>
               <Input
                 type="tel"
@@ -325,18 +465,29 @@ export default function PublicBookingPage() {
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
                 bg="gray.50"
+                borderColor="gray.200"
+                _focus={{
+                  borderColor: BRAND_COLOR,
+                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                }}
               />
             </FormControl>
           </VStack>
 
-          {/* Resumo e Botão */}
           {selectedService && (
-            <Box bg="blue.50" p={4} borderRadius="md" mt={2}>
+            <Box
+              bg="#F9F2ED"
+              p={4}
+              borderRadius="lg"
+              mt={2}
+              borderWidth="1px"
+              borderColor="#EADCCF"
+            >
               <Flex justify="space-between" align="center">
-                <Text color="blue.800" fontWeight="medium">
+                <Text color={TEXT_DARK} fontWeight="medium">
                   Total a pagar no local:
                 </Text>
-                <Heading size="md" color="blue.600">
+                <Heading size="md" color={BRAND_COLOR}>
                   {formatPrice(selectedService.price)}
                 </Heading>
               </Flex>
@@ -345,11 +496,22 @@ export default function PublicBookingPage() {
 
           <Button
             size="lg"
-            colorScheme="blue"
+            bg={BRAND_COLOR}
+            color="white"
+            _hover={{
+              bg: BRAND_HOVER,
+              transform: "translateY(-1px)",
+              shadow: "md",
+            }}
+            _active={{ transform: "translateY(0)" }}
+            transition="all 0.2s"
             onClick={handleSubmit}
             isLoading={bookMutation.isPending}
+            isDisabled={!isOpen}
             loadingText="Agendando..."
-            mt={2}
+            mt={4}
+            h="56px"
+            fontSize="lg"
           >
             Confirmar Agendamento
           </Button>

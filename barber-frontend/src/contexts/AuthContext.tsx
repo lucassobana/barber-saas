@@ -1,3 +1,5 @@
+"use client";
+
 import {
   createContext,
   useContext,
@@ -9,10 +11,11 @@ import { useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 import { useToast } from "@chakra-ui/react";
 import { AxiosError } from "axios";
+import { setCookie, parseCookies, destroyCookie } from "nookies"; // Substituímos o localStorage por nookies
 
 interface Membership {
   barbershopId: string;
-  role: "ADMIN" | "BARBER";
+  role: "ADMIN" | "BARBER" | "OWNER" ;
 }
 
 interface User {
@@ -35,7 +38,7 @@ interface ApiErrorResponse {
 interface AuthContextData {
   user: User | null;
   isAuthenticated: boolean;
-  isLoading: boolean; // 1. Novo estado para proteger a rota
+  isLoading: boolean;
   signIn: (credentials: SignInCredentials) => Promise<void>;
   signOut: () => void;
 }
@@ -44,16 +47,16 @@ export const AuthContext = createContext({} as AuthContextData);
 
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
-  const [isLoading, setIsLoading] = useState(true); // Começa como true
+  const [isLoading, setIsLoading] = useState(true);
   const router = useRouter();
   const toast = useToast();
 
   useEffect(() => {
-    const recoveredUser = localStorage.getItem("@BarberSaaS:user");
-    const token = localStorage.getItem("@BarberSaaS:token");
+    // Lemos os cookies usando nookies
+    const { "@BarberSaaS:user": recoveredUser, "@BarberSaaS:token": token } =
+      parseCookies();
 
     if (recoveredUser && token) {
-      // Ignora o aviso, pois essa é a forma correta de hidratar dados no Next.js
       // eslint-disable-next-line react-hooks/set-state-in-effect
       setUser(JSON.parse(recoveredUser));
       api.defaults.headers.common["Authorization"] = `Bearer ${token}`;
@@ -67,12 +70,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const response = await api.post("/auth/login", { email, password });
       const { access_token, user: loggedUser } = response.data;
 
-      localStorage.setItem("@BarberSaaS:token", access_token);
-      localStorage.setItem("@BarberSaaS:user", JSON.stringify(loggedUser));
-      document.cookie = `@BarberSaaS:token=${access_token}; path=/; max-age=604800; samesite=lax`;
+      // Salvamos o token e o usuário nos cookies com duração de 7 dias
+      setCookie(undefined, "@BarberSaaS:token", access_token, {
+        maxAge: 60 * 60 * 24 * 7, // 7 dias
+        path: "/",
+      });
+
+      setCookie(undefined, "@BarberSaaS:user", JSON.stringify(loggedUser), {
+        maxAge: 60 * 60 * 24 * 7,
+        path: "/",
+      });
 
       api.defaults.headers.common["Authorization"] = `Bearer ${access_token}`;
-
       setUser(loggedUser);
     } catch (error) {
       const axiosError = error as AxiosError<ApiErrorResponse>;
@@ -91,9 +100,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   };
 
   const signOut = () => {
-    localStorage.removeItem("@BarberSaaS:token");
-    localStorage.removeItem("@BarberSaaS:user");
-    document.cookie = "@BarberSaaS:token=; path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT";
+    // Removemos os cookies de forma segura
+    destroyCookie(undefined, "@BarberSaaS:token");
+    destroyCookie(undefined, "@BarberSaaS:user");
     setUser(null);
     router.push("/login");
   };

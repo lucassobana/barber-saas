@@ -11,6 +11,8 @@ import { AppointmentsModule } from './appointments/appointments.module';
 import { DashboardModule } from './dashboard/dashboard.module';
 import { PublicModule } from './public/public.module';
 import { PlatformModule } from './platform/platform.module';
+import { MailModule } from './mail/mail.module';
+import { AdminModule } from './admin/admin.module';
 
 @Module({
   imports: [
@@ -24,6 +26,8 @@ import { PlatformModule } from './platform/platform.module';
     DashboardModule,
     PublicModule,
     PlatformModule,
+    MailModule,
+    AdminModule,
   ],
   controllers: [AppController],
   providers: [AppService],

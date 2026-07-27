@@ -11,9 +11,5 @@ export class CreateClientDto {
 
   @IsString()
   @IsOptional()
-  whatsapp?: string;
-
-  @IsString()
-  @IsOptional()
   notes?: string;
 }

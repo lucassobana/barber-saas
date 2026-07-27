@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsEmail } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsEmail,
+  IsOptional,
+  IsArray,
+} from 'class-validator';
 
 export class CreatePlatformDto {
   // Dados da Barbearia
@@ -6,6 +12,11 @@ export class CreatePlatformDto {
   @IsString() @IsNotEmpty() slug!: string;
   @IsString() @IsNotEmpty() openTime!: string;
   @IsString() @IsNotEmpty() closeTime!: string;
+
+  @IsArray()
+  @IsString({ each: true })
+  @IsOptional()
+  openDays?: string[];
 
   // Dados do Cliente (Dono da barbearia que vai acessar o sistema)
   @IsString() @IsNotEmpty() ownerName!: string;

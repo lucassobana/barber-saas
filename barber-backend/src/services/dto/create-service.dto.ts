@@ -1,4 +1,10 @@
-import { IsString, IsNotEmpty, IsNumber, IsOptional } from 'class-validator';
+import {
+  IsString,
+  IsNotEmpty,
+  IsNumber,
+  IsOptional,
+  IsBoolean,
+} from 'class-validator';
 
 export class CreateServiceDto {
   @IsString()
@@ -16,4 +22,8 @@ export class CreateServiceDto {
   @IsString()
   @IsOptional()
   barberId?: string; // Admin pode definir de quem é o serviço.
+
+  @IsBoolean()
+  @IsOptional()
+  status?: boolean;
 }

@@ -13,14 +13,22 @@ enum Role {
   BARBER
 }
 
+enum UserStatus {
+  PENDING
+  ACTIVE
+  INACTIVE
+}
+
 model Barbershop {
   id        String  @id @default(uuid())
   slug      String  @unique
   name      String
   phone     String?
-  whatsapp  String?
-  openTime  String // Ex: "09:00"
-  closeTime String // Ex: "19:00"
+  openTime  String
+  openDays  String[]
+  closeTime String
+
+  maxBarbers Int @default(2) // A CATRACA: Limite do plano básico
 
   users        UserBarbershop[]
   barbers      Barber[]
@@ -37,6 +45,10 @@ model User {
   name     String
   email    String @unique
   password String
+
+  status        UserStatus @default(PENDING)
+  inviteToken   String?
+  inviteExpires DateTime?
 
   memberships  UserBarbershop[]
   isSuperAdmin Boolean          @default(false)
@@ -64,18 +76,19 @@ model Barber {
   id        String  @id @default(uuid())
   name      String
   phone     String?
-  whatsapp  String?
+  email     String  @unique // Adicionado para o envio do convite
   openTime  String
+  openDays  String[]
   closeTime String
-  status    Boolean @default(true) // true = Ativo, false = Inativo
+  status    Boolean @default(true) 
 
   barbershopId String
   barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
 
-  user         User? // Relacionamento reverso com User
+  user         User? 
   appointments Appointment[]
-  services     Service[] // Serviços pertencentes a este barbeiro
-  clients      Client[] // Clientes pertencentes a este barbeiro
+  services     Service[] 
+  clients      Client[] 
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -86,6 +99,7 @@ model Service {
   name     String
   price    Decimal @db.Decimal(10, 2)
   duration Int // Duração em minutos
+  status   Boolean @default(true)
 
   barbershopId String
   barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
@@ -103,13 +117,12 @@ model Client {
   id       String  @id @default(uuid())
   name     String
   phone    String
-  whatsapp String?
   notes    String? @db.Text
 
   barbershopId String
   barbershop   Barbershop @relation(fields: [barbershopId], references: [id])
 
-  barberId String? // Opcional: Se nulo, é um cliente global (do Admin)
+  barberId String? 
   barber   Barber? @relation(fields: [barberId], references: [id])
 
   appointments Appointment[]

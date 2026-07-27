@@ -18,50 +18,43 @@ import {
   HStack,
   Spinner,
   Center,
+  useDisclosure,
   Avatar,
   Badge,
 } from "@chakra-ui/react";
-import { Plus, MoreHorizontal, MessageCircle } from "lucide-react";
+import { Plus, MoreHorizontal } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
+import { useState } from "react";
 import { api } from "@/lib/api";
+import { Client, ClientModal } from "@/components/ClientModal";
 
-// Tipagem do Cliente que vem do Backend
-interface Client {
-  id: string;
-  name: string;
-  phone: string;
-  whatsapp: string | null;
-  notes: string | null;
-}
+const BRAND_COLOR = "#904D22";
+const BRAND_HOVER = "#733c19";
 
 export default function ClientesPage() {
-  // Chamada à API utilizando o React Query
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [selectedClient, setSelectedClient] = useState<Client | null>(null);
+
   const {
     data: clients = [],
     isLoading,
     isError,
   } = useQuery<Client[]>({
     queryKey: ["clients"],
-    queryFn: async () => {
-      const response = await api.get("/clients");
-      return response.data;
-    },
+    queryFn: async () => (await api.get("/clients")).data,
   });
 
-  // Função para formatar o telefone
-  const formatPhone = (phone: string | null | undefined) => {
-    if (!phone) return "-";
-    const cleaned = ("" + phone).replace(/\D/g, "");
-    const match = cleaned.match(/^(\d{2})(\d{5})(\d{4})$/);
-    if (match) {
-      return `(${match[1]}) ${match[2]}-${match[3]}`;
-    }
-    return phone;
+  const handleOpenCreateModal = () => {
+    setSelectedClient(null);
+    onOpen();
+  };
+  const handleOpenEditModal = (client: Client) => {
+    setSelectedClient(client);
+    onOpen();
   };
 
   return (
     <Box>
-      {/* Cabeçalho da Página */}
       <Flex
         direction={{ base: "column", sm: "row" }}
         justify="space-between"
@@ -74,15 +67,21 @@ export default function ClientesPage() {
             Clientes
           </Heading>
           <Text color="gray.500" mt={1}>
-            Gerencie a base de clientes da barbearia
+            Sua base de clientes e histórico
           </Text>
         </Box>
-        <Button size="sm" colorScheme="blue" leftIcon={<Plus size={16} />}>
+        <Button
+          size="sm"
+          bg={BRAND_COLOR}
+          color="white"
+          _hover={{ bg: BRAND_HOVER }}
+          leftIcon={<Plus size={16} />}
+          onClick={handleOpenCreateModal}
+        >
           Novo cliente
         </Button>
       </Flex>
 
-      {/* Container Principal */}
       <Box
         bg="white"
         borderRadius="xl"
@@ -91,82 +90,55 @@ export default function ClientesPage() {
         shadow="sm"
         overflow="hidden"
       >
-        {/* Loading State */}
         {isLoading && (
           <Center p={10}>
-            <Spinner color="blue.500" size="xl" />
+            <Spinner color={BRAND_COLOR} size="xl" />
           </Center>
         )}
-
-        {/* Error State */}
         {isError && (
           <Center p={10}>
-            <Text color="red.500">
-              Erro ao carregar os clientes. Tente novamente.
-            </Text>
+            <Text color="red.500">Erro ao carregar os clientes.</Text>
           </Center>
         )}
-
-        {/* Lista de Clientes */}
         {!isLoading && !isError && (
           <>
-            {/* === VISÃO DESKTOP (Tabela) === */}
             <Box display={{ base: "none", md: "block" }} overflowX="auto">
               <Table variant="simple" size="md">
                 <Thead bg="gray.50">
                   <Tr>
                     <Th>Cliente</Th>
                     <Th>Telefone</Th>
-                    <Th>WhatsApp</Th>
-                    <Th>Anotações</Th>
+                    <Th>Info</Th>
                     <Th></Th>
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {clients.map((client) => (
-                    <Tr key={client.id} _hover={{ bg: "gray.50" }}>
+                  {clients.map((c) => (
+                    <Tr key={c.id} _hover={{ bg: "gray.50" }}>
                       <Td>
                         <HStack spacing={3}>
                           <Avatar
                             size="sm"
-                            name={client.name}
-                            bg="gray.200"
-                            color="gray.600"
+                            name={c.name}
+                            bg={BRAND_COLOR}
+                            color="white"
                           />
                           <Text fontWeight="medium" color="gray.900">
-                            {client.name}
+                            {c.name}
                           </Text>
                         </HStack>
                       </Td>
-                      <Td color="gray.600">{formatPhone(client.phone)}</Td>
+                      <Td color="gray.600">{c.phone}</Td>
                       <Td>
-                        {client.whatsapp ? (
-                          <Badge
-                            colorScheme="green"
-                            variant="subtle"
-                            display="flex"
-                            alignItems="center"
-                            w="fit-content"
-                            px={2}
-                            py={1}
-                            gap={1}
-                          >
-                            <MessageCircle size={12} />
-                            {formatPhone(client.whatsapp)}
+                        {c.notes ? (
+                          <Badge colorScheme="orange" variant="subtle">
+                            Tem observações
                           </Badge>
                         ) : (
                           <Text color="gray.400" fontSize="sm">
                             -
                           </Text>
                         )}
-                      </Td>
-                      <Td
-                        color="gray.500"
-                        fontSize="sm"
-                        maxW="200px"
-                        isTruncated
-                      >
-                        {client.notes || "-"}
                       </Td>
                       <Td textAlign="right">
                         <IconButton
@@ -175,15 +147,15 @@ export default function ClientesPage() {
                           size="sm"
                           variant="ghost"
                           color="gray.400"
+                          onClick={() => handleOpenEditModal(c)}
                         />
                       </Td>
                     </Tr>
                   ))}
-
                   {clients.length === 0 && (
                     <Tr>
                       <Td
-                        colSpan={5}
+                        colSpan={4}
                         textAlign="center"
                         py={6}
                         color="gray.500"
@@ -195,60 +167,46 @@ export default function ClientesPage() {
                 </Tbody>
               </Table>
             </Box>
-
-            {/* === VISÃO MOBILE (Lista) === */}
             <Box display={{ base: "block", md: "none" }}>
               <VStack align="stretch" spacing={0} divider={<Divider />}>
-                {clients.map((client) => (
-                  <Box key={client.id} p={4}>
-                    <Flex align="center" justify="space-between" mb={2}>
-                      <HStack spacing={3}>
-                        <Avatar
-                          size="sm"
-                          name={client.name}
-                          bg="gray.200"
-                          color="gray.600"
-                        />
-                        <Box>
-                          <Text
-                            fontSize="sm"
-                            fontWeight="semibold"
-                            color="gray.900"
-                          >
-                            {client.name}
-                          </Text>
-                          <Text fontSize="xs" color="gray.500">
-                            {formatPhone(client.phone)}
-                          </Text>
-                        </Box>
-                      </HStack>
-                      <IconButton
-                        aria-label="Opções"
-                        icon={<MoreHorizontal size={16} />}
+                {clients.map((c) => (
+                  <Box
+                    key={c.id}
+                    p={4}
+                    onClick={() => handleOpenEditModal(c)}
+                    cursor="pointer"
+                  >
+                    <Flex align="center" gap={3}>
+                      <Avatar
                         size="sm"
-                        variant="ghost"
-                        color="gray.400"
+                        name={c.name}
+                        bg={BRAND_COLOR}
+                        color="white"
                       />
+                      <Box flex="1">
+                        <Text
+                          fontSize="sm"
+                          fontWeight="semibold"
+                          color="gray.900"
+                        >
+                          {c.name}
+                        </Text>
+                        <Text fontSize="xs" color="gray.500" mt={0.5}>
+                          {c.phone}
+                        </Text>
+                      </Box>
+                      {c.notes && (
+                        <Badge
+                          colorScheme="orange"
+                          variant="subtle"
+                          fontSize="2xs"
+                        >
+                          Obs
+                        </Badge>
+                      )}
                     </Flex>
-
-                    {client.whatsapp && (
-                      <Badge
-                        mt={2}
-                        colorScheme="green"
-                        variant="subtle"
-                        display="inline-flex"
-                        alignItems="center"
-                        px={2}
-                        py={1}
-                        gap={1}
-                      >
-                        <MessageCircle size={12} />
-                        WhatsApp: {formatPhone(client.whatsapp)}
-                      </Badge>
-                    )}
                   </Box>
                 ))}
-
                 {clients.length === 0 && (
                   <Box p={6} textAlign="center" color="gray.500">
                     Nenhum cliente cadastrado.
@@ -259,6 +217,7 @@ export default function ClientesPage() {
           </>
         )}
       </Box>
+      <ClientModal isOpen={isOpen} onClose={onClose} client={selectedClient} />
     </Box>
   );
 }

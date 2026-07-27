@@ -1,6 +1,11 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateClientDto } from './dto/create-client.dto';
+import { UpdateClientDto } from './dto/update-client.dto';
 import { Prisma, Role } from '@prisma/client';
 
 @Injectable()
@@ -23,8 +28,10 @@ export class ClientsService {
   }
 
   async findAll(barbershopId: string, role: Role, barberId: string | null) {
-    // Usamos a tipagem exata do Prisma ao invés de "any"
-    const whereClause: Prisma.ClientWhereInput = { barbershopId };
+    // CORREÇÃO: O filtro de barbershopId agora é obrigatório
+    const whereClause: Prisma.ClientWhereInput = {
+      barbershopId: barbershopId,
+    };
 
     if (role === 'BARBER') {
       whereClause.barberId = barberId;
@@ -46,16 +53,49 @@ export class ClientsService {
       where: { id },
     });
 
-    if (!client || client.barbershopId !== barbershopId) {
-      throw new ForbiddenException('Cliente não encontrado.');
+    if (!client) {
+      throw new NotFoundException('Cliente não encontrado.');
+    }
+
+    // CORREÇÃO: Trava do Tenant obrigatória
+    if (client.barbershopId !== barbershopId) {
+      throw new ForbiddenException('Cliente não encontrado ou acesso negado.');
     }
 
     if (role === 'BARBER' && client.barberId !== barberId) {
       throw new ForbiddenException(
-        'Você não tem permissão para acessar este cliente.',
+        'Você não tem permissão para acessar os dados deste cliente.',
       );
     }
 
     return client;
+  }
+
+  async update(
+    id: string,
+    updateClientDto: UpdateClientDto,
+    barbershopId: string,
+    role: Role,
+    barberId: string | null,
+  ) {
+    await this.findOne(id, barbershopId, role, barberId);
+
+    return this.prisma.client.update({
+      where: { id },
+      data: updateClientDto,
+    });
+  }
+
+  async remove(
+    id: string,
+    barbershopId: string,
+    role: Role,
+    barberId: string | null,
+  ) {
+    await this.findOne(id, barbershopId, role, barberId);
+
+    return this.prisma.client.delete({
+      where: { id },
+    });
   }
 }

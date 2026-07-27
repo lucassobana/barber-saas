@@ -13,51 +13,59 @@ import {
   Th,
   Td,
   Badge,
-  Switch,
-  VStack,
-  Divider,
-  IconButton,
+  Switch, IconButton,
   HStack,
   Spinner,
   Center,
+  useDisclosure,
+  useToast
 } from "@chakra-ui/react";
 import { Plus, MoreHorizontal } from "lucide-react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { api } from "@/lib/api";
+import { ServiceModal, Service } from "@/components/ServiceModal";
 
-// Tipagem do Serviço que vem do Backend
-interface Service {
-  id: string;
-  name: string;
-  price: string | number;
-  duration: number;
-}
+const BRAND_COLOR = "#904D22";
+const BRAND_HOVER = "#733c19";
 
 export default function ServicosPage() {
-  // Chamada à API utilizando o React Query
+  const { isOpen, onOpen, onClose } = useDisclosure();
+  const [selectedService, setSelectedService] = useState<Service | null>(null);
+  const toast = useToast();
+  const queryClient = useQueryClient();
+
   const {
     data: services = [],
     isLoading,
     isError,
   } = useQuery<Service[]>({
     queryKey: ["services"],
-    queryFn: async () => {
-      const response = await api.get("/services");
-      return response.data;
+    queryFn: async () => (await api.get("/services")).data,
+  });
+
+  const toggleStatusMutation = useMutation({
+    mutationFn: async ({ id, status }: { id: string; status: boolean }) =>
+      api.patch(`/services/${id}`, { status }),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["services"] });
+      toast({
+        title: "Status atualizado!",
+        status: "success",
+        duration: 2000,
+        isClosable: true,
+      });
     },
   });
 
-  // Função para formatar o preço padrão Brasil (BRL)
-  const formatPrice = (price: string | number) => {
-    return new Intl.NumberFormat("pt-BR", {
+  const formatPrice = (price: string | number) =>
+    new Intl.NumberFormat("pt-BR", {
       style: "currency",
       currency: "BRL",
     }).format(Number(price));
-  };
 
   return (
     <Box>
-      {/* Cabeçalho da Página */}
       <Flex
         direction={{ base: "column", sm: "row" }}
         justify="space-between"
@@ -73,12 +81,20 @@ export default function ServicosPage() {
             Catálogo de atendimentos oferecidos
           </Text>
         </Box>
-        <Button size="sm" colorScheme="blue" leftIcon={<Plus size={16} />}>
+        <Button
+          size="sm"
+          bg={BRAND_COLOR}
+          color="white"
+          _hover={{ bg: BRAND_HOVER }}
+          leftIcon={<Plus size={16} />}
+          onClick={() => {
+            setSelectedService(null);
+            onOpen();
+          }}
+        >
           Novo serviço
         </Button>
       </Flex>
-
-      {/* Container Principal */}
       <Box
         bg="white"
         borderRadius="xl"
@@ -87,39 +103,27 @@ export default function ServicosPage() {
         shadow="sm"
         overflow="hidden"
       >
-        {/* Loading State */}
         {isLoading && (
           <Center p={10}>
-            <Spinner color="blue.500" size="xl" />
+            <Spinner color={BRAND_COLOR} size="xl" />
           </Center>
         )}
-
-        {/* Error State */}
-        {isError && (
-          <Center p={10}>
-            <Text color="red.500">
-              Erro ao carregar os serviços. Tente novamente.
-            </Text>
-          </Center>
-        )}
-
-        {/* Lista de Serviços (Só renderiza quando termina de carregar) */}
         {!isLoading && !isError && (
-          <>
-            {/* === VISÃO DESKTOP (Tabela) === */}
-            <Box display={{ base: "none", md: "block" }} overflowX="auto">
-              <Table variant="simple" size="md">
-                <Thead bg="gray.50">
-                  <Tr>
-                    <Th>Serviço</Th>
-                    <Th>Preço</Th>
-                    <Th>Duração</Th>
-                    <Th>Status</Th>
-                    <Th></Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {services.map((s) => (
+          <Box overflowX="auto">
+            <Table variant="simple" size="md">
+              <Thead bg="gray.50">
+                <Tr>
+                  <Th>Serviço</Th>
+                  <Th>Preço</Th>
+                  <Th>Duração</Th>
+                  <Th>Status</Th>
+                  <Th></Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {services.map((s) => {
+                  const isActive = s.status !== false;
+                  return (
                     <Tr key={s.id} _hover={{ bg: "gray.50" }}>
                       <Td fontWeight="medium" color="gray.900">
                         {s.name}
@@ -130,16 +134,25 @@ export default function ServicosPage() {
                       <Td color="gray.500">{s.duration} min</Td>
                       <Td>
                         <HStack spacing={3}>
-                          {/* Nota: Como não criamos a coluna status no backend ainda, deixaremos visualmente como Ativo */}
-                          <Switch isChecked={true} colorScheme="green" />
-                          <Badge
+                          <Switch
+                            isChecked={isActive}
                             colorScheme="green"
+                            onChange={(e) =>
+                              toggleStatusMutation.mutate({
+                                id: s.id,
+                                status: e.target.checked,
+                              })
+                            }
+                            isDisabled={toggleStatusMutation.isPending}
+                          />
+                          <Badge
+                            colorScheme={isActive ? "green" : "red"}
                             variant="subtle"
                             px={2}
                             py={0.5}
                             borderRadius="md"
                           >
-                            Ativo
+                            {isActive ? "Ativo" : "Inativo"}
                           </Badge>
                         </HStack>
                       </Td>
@@ -150,75 +163,25 @@ export default function ServicosPage() {
                           size="sm"
                           variant="ghost"
                           color="gray.400"
+                          onClick={() => {
+                            setSelectedService(s);
+                            onOpen();
+                          }}
                         />
                       </Td>
                     </Tr>
-                  ))}
-
-                  {services.length === 0 && (
-                    <Tr>
-                      <Td
-                        colSpan={5}
-                        textAlign="center"
-                        py={6}
-                        color="gray.500"
-                      >
-                        Nenhum serviço encontrado.
-                      </Td>
-                    </Tr>
-                  )}
-                </Tbody>
-              </Table>
-            </Box>
-
-            {/* === VISÃO MOBILE (Lista) === */}
-            <Box display={{ base: "block", md: "none" }}>
-              <VStack align="stretch" spacing={0} divider={<Divider />}>
-                {services.map((s) => (
-                  <Box key={s.id} p={4}>
-                    <Flex align="start" justify="space-between">
-                      <Box>
-                        <Text
-                          fontSize="sm"
-                          fontWeight="semibold"
-                          color="gray.900"
-                        >
-                          {s.name}
-                        </Text>
-                        <Text fontSize="xs" color="gray.500" mt={0.5}>
-                          {s.duration} min
-                        </Text>
-                      </Box>
-                      <Text fontSize="md" fontWeight="bold" color="gray.900">
-                        {formatPrice(s.price)}
-                      </Text>
-                    </Flex>
-
-                    <Flex mt={3} align="center" justify="space-between">
-                      <Badge
-                        colorScheme="green"
-                        variant="subtle"
-                        px={2}
-                        py={0.5}
-                        borderRadius="md"
-                      >
-                        Ativo
-                      </Badge>
-                      <Switch isChecked={true} colorScheme="green" />
-                    </Flex>
-                  </Box>
-                ))}
-
-                {services.length === 0 && (
-                  <Box p={6} textAlign="center" color="gray.500">
-                    Nenhum serviço encontrado.
-                  </Box>
-                )}
-              </VStack>
-            </Box>
-          </>
+                  );
+                })}
+              </Tbody>
+            </Table>
+          </Box>
         )}
       </Box>
+      <ServiceModal
+        isOpen={isOpen}
+        onClose={onClose}
+        service={selectedService}
+      />
     </Box>
   );
 }

@@ -4,16 +4,15 @@ import { Box } from "@chakra-ui/react";
 import { Sidebar } from "@/components/Sidebar";
 import { Header } from "@/components/Header";
 
+const BRAND_LIGHT = "#FDF8F5";
+
 export default function AdminLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  // A segurança agora é feita 100% pelo middleware.ts no servidor!
-  // Se o código chegou até aqui, é porque o usuário está logado.
-
   return (
-    <Box minH="100vh" bg="gray.50">
+    <Box minH="100vh" bg={BRAND_LIGHT}>
       <Sidebar />
       <Header />
       <Box ml="64" p="8">

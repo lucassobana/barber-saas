@@ -1,6 +1,11 @@
-import { Injectable, ForbiddenException } from '@nestjs/common';
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+} from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { CreateServiceDto } from './dto/create-service.dto';
+import { UpdateServiceDto } from './dto/update-service.dto';
 import { Prisma, Role } from '@prisma/client';
 
 @Injectable()
@@ -17,7 +22,6 @@ export class ServicesService {
       data: {
         ...createServiceDto,
         barbershopId,
-        // Barbeiro só pode criar serviço para si mesmo
         barberId:
           role === 'BARBER' ? barberId : createServiceDto.barberId || null,
       },
@@ -25,11 +29,13 @@ export class ServicesService {
   }
 
   async findAll(barbershopId: string, role: Role, barberId: string | null) {
-    const whereClause: Prisma.ServiceWhereInput = { barbershopId };
+    // CORREÇÃO: O filtro de barbershopId agora é obrigatório
+    const whereClause: Prisma.ServiceWhereInput = {
+      barbershopId: barbershopId,
+    };
 
     if (role === 'BARBER') {
-      // Barbeiro vê apenas seus serviços ou serviços globais (sem barbeiro específico)
-      whereClause.OR = [{ barberId: barberId }, { barberId: null }];
+      whereClause.OR = [{ barberId: barberId! }, { barberId: null }];
     }
 
     return this.prisma.service.findMany({
@@ -46,8 +52,13 @@ export class ServicesService {
   ) {
     const service = await this.prisma.service.findUnique({ where: { id } });
 
-    if (!service || service.barbershopId !== barbershopId) {
-      throw new ForbiddenException('Serviço não encontrado.');
+    if (!service) {
+      throw new NotFoundException('Serviço não encontrado.');
+    }
+
+    // CORREÇÃO: Trava do Tenant obrigatória
+    if (service.barbershopId !== barbershopId) {
+      throw new ForbiddenException('Serviço não encontrado ou acesso negado.');
     }
 
     if (
@@ -61,5 +72,43 @@ export class ServicesService {
     }
 
     return service;
+  }
+
+  async update(
+    id: string,
+    updateServiceDto: UpdateServiceDto,
+    barbershopId: string,
+    role: Role,
+    barberId: string | null,
+  ) {
+    await this.findOne(id, barbershopId, role, barberId);
+
+    if (
+      role === 'BARBER' &&
+      updateServiceDto.barberId !== undefined &&
+      updateServiceDto.barberId !== barberId
+    ) {
+      throw new ForbiddenException(
+        'Você não pode transferir a posse deste serviço.',
+      );
+    }
+
+    return this.prisma.service.update({
+      where: { id },
+      data: updateServiceDto,
+    });
+  }
+
+  async remove(
+    id: string,
+    barbershopId: string,
+    role: Role,
+    barberId: string | null,
+  ) {
+    await this.findOne(id, barbershopId, role, barberId);
+
+    return this.prisma.service.delete({
+      where: { id },
+    });
   }
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { Box, Flex, Icon, Text, VStack } from "@chakra-ui/react";
+import { Box, Flex, Icon, Text, VStack, Image } from "@chakra-ui/react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
@@ -14,48 +14,55 @@ import {
   FiLogOut,
 } from "react-icons/fi";
 
-// 1. Adicionamos a propriedade 'roles' definindo quem pode ver cada item
+// === CORES DA MARCA ===
+const BRAND_COLOR = "#904D22";
+const BRAND_HOVER = "#733c19";
+const BRAND_LIGHT = "#FDF8F5"; // Fundo leve para o hover
+const TEXT_DARK = "#3D3D3D";
+
 const NAV_ITEMS = [
   {
     name: "Dashboard",
     icon: FiHome,
     path: "/dashboard",
-    roles: ["ADMIN", "BARBER"],
+    roles: ["ADMIN", "BARBER", "OWNER"],
   },
   {
     name: "Agenda",
     icon: FiCalendar,
     path: "/agenda",
-    roles: ["ADMIN", "BARBER"],
+    roles: ["ADMIN", "BARBER", "OWNER"],
   },
   {
     name: "Clientes",
     icon: FiUsers,
     path: "/clientes",
-    roles: ["ADMIN", "BARBER"],
+    roles: ["ADMIN", "BARBER", "OWNER"],
   },
-  { name: "Barbeiros", icon: FiScissors, path: "/barbeiros", roles: ["ADMIN"] }, // Apenas Admin
+  {
+    name: "Barbeiros",
+    icon: FiScissors,
+    path: "/barbeiros",
+    roles: ["ADMIN", "OWNER"],
+  },
   {
     name: "Serviços",
     icon: FiList,
     path: "/servicos",
-    roles: ["ADMIN", "BARBER"],
+    roles: ["ADMIN", "BARBER", "OWNER"],
   },
   {
     name: "Configurações",
     icon: FiSettings,
     path: "/configuracoes",
-    roles: ["ADMIN"],
-  }, // Apenas Admin
+    roles: ["ADMIN", "OWNER"],
+  },
 ];
 
 export function Sidebar() {
   const pathname = usePathname();
-
-  // 2. Extraímos também o 'user' do AuthContext
   const { user, signOut } = useAuth();
 
-  // 3. Filtramos a lista de links baseada no 'role' do usuário logado
   const authorizedNavItems = NAV_ITEMS.filter(
     (item) => user && item.roles.includes(user.memberships[0].role),
   );
@@ -69,46 +76,53 @@ export function Sidebar() {
       h="100vh"
       position="fixed"
     >
-      <Flex h="20" alignItems="center" mx="8" justifyContent="space-between">
-        <Text fontSize="2xl" fontWeight="bold" color="blue.600">
-          Barber SaaS
-        </Text>
+      <Flex h="20" alignItems="center" mx="8" justifyContent="center">
+        {/* LOGO ADICIONADA AQUI */}
+        <Image
+          src="/ProximoCorteLogo.png"
+          alt="PróximoCorte"
+          h="180px"
+          objectFit="contain"
+          fallback={
+            <Text fontSize="xl" fontWeight="bold" color={BRAND_COLOR}>
+              PróximoCorte
+            </Text>
+          }
+        />
       </Flex>
 
       <VStack spacing={2} align="stretch" mt={6} px={4}>
-        {/* 4. Usamos a lista filtrada no .map */}
         {authorizedNavItems.map((item) => {
           const isActive = pathname === item.path;
 
           return (
-            <Link key={item.name} href={item.path} passHref legacyBehavior>
-              <Box
-                as="a"
-                p="3"
-                mx="2"
-                borderRadius="lg"
-                role="group"
-                cursor="pointer"
-                bg={isActive ? "blue.500" : "transparent"}
-                color={isActive ? "white" : "gray.600"}
-                _hover={{
-                  bg: isActive ? "blue.600" : "gray.100",
-                  color: isActive ? "white" : "gray.900",
-                }}
-                display="flex"
-                alignItems="center"
-                transition="all 0.2s"
-              >
-                <Icon mr="4" fontSize="16" as={item.icon} />
-                <Text fontWeight={isActive ? "semibold" : "medium"}>
-                  {item.name}
-                </Text>
-              </Box>
-            </Link>
+            <Box
+              as={Link}
+              href={item.path}
+              key={item.name}
+              p="3"
+              mx="2"
+              borderRadius="lg"
+              role="group"
+              cursor="pointer"
+              bg={isActive ? BRAND_COLOR : "transparent"}
+              color={isActive ? "white" : "gray.600"}
+              _hover={{
+                bg: isActive ? BRAND_HOVER : BRAND_LIGHT,
+                color: isActive ? "white" : TEXT_DARK,
+              }}
+              display="flex"
+              alignItems="center"
+              transition="all 0.2s"
+            >
+              <Icon mr="4" fontSize="16" as={item.icon} />
+              <Text fontWeight={isActive ? "semibold" : "medium"}>
+                {item.name}
+              </Text>
+            </Box>
           );
         })}
 
-        {/* Botão de Logout separado (sempre visível) */}
         <Box
           as="a"
           onClick={signOut}

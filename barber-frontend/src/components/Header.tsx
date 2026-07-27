@@ -3,6 +3,8 @@
 import { Flex, Text, Avatar, Box } from "@chakra-ui/react";
 import { useAuth } from "@/contexts/AuthContext";
 
+const BRAND_COLOR = "#904D22";
+
 export function Header() {
   const { user } = useAuth();
 
@@ -22,11 +24,8 @@ export function Header() {
           <Text fontSize="sm" fontWeight="bold" color="gray.700">
             {user?.name || "Carregando..."}
           </Text>
-          <Text fontSize="xs" color="gray.500">
-            Administrador
-          </Text>
         </Box>
-        <Avatar size="sm" name={user?.name} bg="blue.500" />
+        <Avatar size="sm" name={user?.name} bg={BRAND_COLOR} color="white" />
       </Flex>
     </Flex>
   );
