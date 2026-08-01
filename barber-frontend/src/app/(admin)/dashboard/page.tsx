@@ -17,14 +17,10 @@ import {
   Center,
   Divider,
 } from "@chakra-ui/react";
-import { CalendarClock, Users, DollarSign, Scissors, Plus } from "lucide-react";
+import { CalendarClock, Users, DollarSign, Scissors } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { useQuery } from "@tanstack/react-query";
 import { api } from "@/lib/api";
-
-const BRAND_COLOR = "#904D22";
-const BRAND_HOVER = "#733c19";
-const BRAND_SOFT = "#F9F2ED";
 
 interface Appointment {
   id: string;
@@ -40,9 +36,9 @@ interface Appointment {
 
 function StatusDot({ status }: { status: string }) {
   const map: Record<string, string> = {
-    CONCLUIDO: "green.500",
-    AGENDADO: BRAND_COLOR,
-    CANCELADO: "red.500",
+    CONCLUIDO: "status-success",
+    AGENDADO: "status-info",
+    CANCELADO: "status-error",
   };
   return (
     <Box
@@ -88,10 +84,10 @@ function DynamicChart({ data }: { data: { label: string; value: number }[] }) {
             <Box
               w="full"
               maxW="40px"
-              bg={BRAND_COLOR}
+              bg="brand-primary"
               borderRadius="md"
               transition="all 0.2s"
-              _hover={{ bg: BRAND_HOVER, opacity: 1 }}
+              _hover={{ bg: "brand-hover", opacity: 1 }}
               style={{
                 height: `${(item.value / max) * 100}%`,
                 opacity: 0.6 + (item.value / max) * 0.4,
@@ -102,7 +98,7 @@ function DynamicChart({ data }: { data: { label: string; value: number }[] }) {
           </Flex>
           <Text
             fontSize="10px"
-            color="gray.500"
+            color="text-secondary"
             noOfLines={1}
             textAlign="center"
           >
@@ -148,19 +144,22 @@ export default function DashboardPage() {
     },
   });
 
+  // 1. Contador de Atendimentos: Conta tudo que não está cancelado para mostrar o fluxo do dia
   const validAppointmentsToday = appointmentsToday.filter(
     (a) => a.status !== "CANCELADO",
   );
   const totalAtendimentos = validAppointmentsToday.length;
 
-  const faturamentoHoje = validAppointmentsToday.reduce(
-    (acc, app) => acc + Number(app.price || app.service.price || 0),
-    0,
-  );
+  // 2. Faturamento Hoje: Soma APENAS os cortes já CONCLUÍDOS (Caixa Real)
+  const faturamentoHoje = appointmentsToday
+    .filter((a) => a.status === "CONCLUIDO")
+    .reduce((acc, app) => acc + Number(app.price || app.service.price || 0), 0);
 
+  // 3. Gráfico de Evolução: Usa APENAS os cortes já CONCLUÍDOS
   const chartData = (() => {
+    // A MUDANÇA PRINCIPAL AQUI: Filtra estritamente por "CONCLUIDO"
     const validChartAppointments = chartAppointments.filter(
-      (a) => a.status !== "CANCELADO",
+      (a) => a.status === "CONCLUIDO",
     );
 
     if (faturamentoFilter === "hoje") {
@@ -259,50 +258,44 @@ export default function DashboardPage() {
   if (isLoadingToday || isLoadingChart) {
     return (
       <Center h="100vh">
-        <Spinner size="xl" color={BRAND_COLOR} thickness="4px" speed="0.65s" />
+        <Spinner
+          size="xl"
+          color="brand-primary"
+          thickness="4px"
+          speed="0.65s"
+        />
       </Center>
     );
   }
 
   return (
     <Box>
-      <Flex
-        direction={{ base: "column", sm: "row" }}
-        justify="space-between"
-        align={{ base: "start", sm: "center" }}
-        mb={8}
-        gap={4}
-      >
-        <Box>
-          <Heading size="lg" color="gray.900">
+      {/* CABEÇALHO RESPONSIVO */}
+      <Box textAlign={{ base: "center", sm: "left" }}>
+        <Flex align="center" gap={2} mb={8} justify="space-between">
+          <Heading size="lg" color="text-primary">
             Olá, {user?.name?.split(" ")[0] || "Administrador"}
           </Heading>
-          <Text color="gray.500" mt={1} textTransform="capitalize">
-            {today} · {isOwner ? "Visão Geral" : "Resumo do Dia"}
-          </Text>
-        </Box>
-        <HStack spacing={3}>
-          <Button
-            size="sm"
-            bg={BRAND_COLOR}
-            color="white"
-            _hover={{ bg: BRAND_HOVER }}
-            leftIcon={<Plus size={16} />}
-          >
-            Novo agendamento
-          </Button>
-        </HStack>
-      </Flex>
 
+          <Text color="text-muted" textTransform="capitalize">
+            {today}
+          </Text>
+        </Flex>
+      </Box>
+
+      {/* CARDS DE ESTATÍSTICAS */}
       <SimpleGrid columns={{ base: 1, sm: 2, xl: 4 }} spacing={4} mb={6}>
         {stats.map((s) => (
           <Box
             key={s.label}
-            bg="white"
+            bg="bg-surface"
             p={5}
             borderRadius="xl"
             borderWidth="1px"
-            shadow="sm"
+            borderColor="border-subtle"
+            shadow="card-shadow"
+            _hover={{ borderColor: "border-hover" }}
+            transition="all 0.2s"
           >
             <Flex align="start" justify="space-between">
               <Box>
@@ -311,7 +304,7 @@ export default function DashboardPage() {
                   fontWeight="bold"
                   textTransform="uppercase"
                   letterSpacing="wide"
-                  color="gray.500"
+                  color="text-secondary"
                 >
                   {s.label}
                 </Text>
@@ -320,7 +313,7 @@ export default function DashboardPage() {
                   fontSize="2xl"
                   fontWeight="semibold"
                   letterSpacing="tight"
-                  color="gray.900"
+                  color="text-primary"
                 >
                   {s.value}
                 </Text>
@@ -331,8 +324,8 @@ export default function DashboardPage() {
                 align="center"
                 justify="center"
                 borderRadius="lg"
-                bg={BRAND_SOFT}
-                color={BRAND_COLOR}
+                bg="brand-soft"
+                color="brand-primary"
               >
                 <Icon as={s.icon} boxSize={5} />
               </Flex>
@@ -346,49 +339,74 @@ export default function DashboardPage() {
         gap={4}
         mb={6}
       >
+        {/* GRÁFICO DE FATURAMENTO */}
         <GridItem colSpan={{ base: 1, lg: 2 }}>
           <Box
-            bg="white"
+            bg="bg-surface"
             borderRadius="xl"
             borderWidth="1px"
-            shadow="sm"
+            borderColor="border-subtle"
+            shadow="card-shadow"
             h="100%"
           >
             <Flex
               p={6}
-              align="center"
+              direction={{ base: "column", sm: "row" }}
+              align={{ base: "stretch", sm: "center" }}
               justify="space-between"
               borderBottomWidth="1px"
-              borderColor="gray.50"
+              borderColor="border-subtle"
+              gap={4}
             >
-              <Box>
-                <Heading size="md" color="gray.900">
+              <Box textAlign={{ base: "center", sm: "left" }}>
+                <Heading size="md" color="text-primary">
                   Evolução do Faturamento
                 </Heading>
-                <Text fontSize="sm" color="gray.500" mt={1} fontWeight="medium">
+                <Text
+                  fontSize="sm"
+                  color="text-secondary"
+                  mt={1}
+                  fontWeight="medium"
+                >
                   {new Intl.NumberFormat("pt-BR", {
                     style: "currency",
                     currency: "BRL",
                   }).format(totalFaturamentoCard)}{" "}
-                  <Text as="span" fontWeight="normal">
+                  <Text as="span" fontWeight="normal" color="text-muted">
                     no período
                   </Text>
                 </Text>
               </Box>
-              <HStack bg="gray.100" p={1} borderRadius="lg" spacing={1}>
+
+              <HStack
+                bg="bg-surface-secondary"
+                p={1}
+                borderRadius="lg"
+                spacing={1}
+                w={{ base: "full", sm: "auto" }}
+                justify="center"
+              >
                 {(["hoje", "semana", "mes"] as const).map((filter) => (
                   <Button
                     key={filter}
                     size="xs"
+                    flex={{ base: 1, sm: "none" }} // Ocupa espaço igual no mobile
                     variant={faturamentoFilter === filter ? "solid" : "ghost"}
-                    bg={faturamentoFilter === filter ? "white" : "transparent"}
+                    bg={
+                      faturamentoFilter === filter
+                        ? "bg-surface-hover"
+                        : "transparent"
+                    }
                     shadow={faturamentoFilter === filter ? "sm" : "none"}
                     color={
-                      faturamentoFilter === filter ? BRAND_COLOR : "gray.500"
+                      faturamentoFilter === filter
+                        ? "text-primary"
+                        : "text-secondary"
                     }
                     borderRadius="md"
                     textTransform="capitalize"
                     onClick={() => setFaturamentoFilter(filter)}
+                    _hover={{ bg: "bg-surface-hover", color: "text-primary" }}
                   >
                     {filter}
                   </Button>
@@ -398,7 +416,7 @@ export default function DashboardPage() {
             <Box p={6}>
               {totalFaturamentoCard === 0 && faturamentoFilter === "hoje" ? (
                 <Center h="200px">
-                  <Text color="gray.500">
+                  <Text color="text-muted" textAlign="center">
                     Nenhum faturamento registrado para hoje ainda.
                   </Text>
                 </Center>
@@ -409,26 +427,44 @@ export default function DashboardPage() {
           </Box>
         </GridItem>
 
+        {/* AGENDA DO DIA (LISTA LATERAL) */}
         <GridItem colSpan={1}>
           <Box
-            bg="white"
+            bg="bg-surface"
             borderRadius="xl"
             borderWidth="1px"
-            shadow="sm"
+            borderColor="border-subtle"
+            shadow="card-shadow"
             h="100%"
           >
-            <Box p={6} pb={4} borderBottomWidth="1px" borderColor="gray.50">
-              <Heading size="md" color="gray.900">
+            <Box
+              p={6}
+              pb={4}
+              borderBottomWidth="1px"
+              borderColor="border-subtle"
+              textAlign={{ base: "center", sm: "left" }}
+            >
+              <Heading size="md" color="text-primary">
                 Agenda do dia
               </Heading>
-              <Text fontSize="sm" color="gray.500" mt={1}>
+              <Text fontSize="sm" color="text-secondary" mt={1}>
                 {appointmentsToday.length} clientes na fila
               </Text>
             </Box>
 
-            <VStack p={0} spacing={0} align="stretch" divider={<Divider />}>
+            <VStack
+              p={0}
+              spacing={0}
+              align="stretch"
+              divider={<Divider borderColor="border-subtle" />}
+            >
               {appointmentsToday.length === 0 && (
-                <Text fontSize="sm" color="gray.500" textAlign="center" py={10}>
+                <Text
+                  fontSize="sm"
+                  color="text-muted"
+                  textAlign="center"
+                  py={10}
+                >
                   Nenhum cliente agendado para hoje.
                 </Text>
               )}
@@ -438,15 +474,15 @@ export default function DashboardPage() {
                   align="center"
                   gap={4}
                   p={4}
-                  _hover={{ bg: "gray.50" }}
                   transition="background 0.2s"
+                  _hover={{ bg: "bg-surface-secondary" }}
                 >
                   <Flex
                     direction="column"
                     align="center"
                     justify="center"
-                    bg={BRAND_SOFT}
-                    color={BRAND_COLOR}
+                    bg="brand-soft"
+                    color="brand-primary"
                     px={3}
                     py={2}
                     borderRadius="md"
@@ -460,18 +496,18 @@ export default function DashboardPage() {
                     <Text
                       fontSize="sm"
                       fontWeight="bold"
-                      color="gray.900"
+                      color="text-primary"
                       isTruncated
                     >
                       {a.client.name}
                     </Text>
-                    <Text fontSize="xs" color="gray.500" isTruncated>
+                    <Text fontSize="xs" color="text-secondary" isTruncated>
                       {a.service.name} {isOwner && `• ${a.barber.name}`}
                     </Text>
                   </Box>
                   <VStack align="end" spacing={1}>
                     <StatusDot status={a.status} />
-                    <Text fontSize="2xs" color="gray.400">
+                    <Text fontSize="2xs" color="text-muted">
                       {getStatusLabel(a.status)}
                     </Text>
                   </VStack>

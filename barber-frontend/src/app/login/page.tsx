@@ -20,10 +20,6 @@ import { useMutation } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/contexts/AuthContext";
 
-const BRAND_COLOR = "#904D22";
-const BRAND_HOVER = "#733c19";
-const BRAND_LIGHT = "#FDF8F5";
-
 const loginSchema = z.object({
   email: z
     .string()
@@ -67,30 +63,40 @@ export default function LoginPage() {
   };
 
   return (
-    <Flex minH="100vh" align="center" justify="center" bg={BRAND_LIGHT}>
+    <Flex
+      minH="100vh"
+      align="center"
+      justify="center"
+      bg="bg-app"
+      p={4} // Impede que o card encoste nas bordas do celular
+    >
       <Box
-        p={8}
+        p={{ base: 6, md: 8 }} // Padding menor no celular, maior no desktop
         maxWidth="400px"
         borderWidth={1}
         borderRadius="xl"
-        boxShadow="lg"
-        bg="white"
+        shadow="card-shadow"
+        bg="bg-surface"
         w="100%"
-        borderColor="gray.100"
+        borderColor="border-subtle"
       >
         <Stack spacing={4} mb={6} align="center">
           <Image
             src="/ProximoCorteLogo.png"
             alt="PróximoCorte"
-            h="240px"
+            h={{ base: "180px", md: "200px" }} // Altura responsiva para a logo
             objectFit="contain"
             fallback={
-              <Heading fontSize="2xl" color="#3D3D3D">
+              <Heading fontSize="2xl" color="text-primary">
                 PróximoCorte
               </Heading>
             }
           />
-          <Box color="gray.500" fontSize="sm">
+          <Box
+            color="text-secondary"
+            fontSize={{ base: "xs", md: "sm" }}
+            textAlign="center"
+          >
             Faça login para gerenciar sua barbearia
           </Box>
         </Stack>
@@ -98,44 +104,60 @@ export default function LoginPage() {
         <form onSubmit={handleSubmit(onSubmit)}>
           <Stack spacing={5}>
             <FormControl isInvalid={!!errors.email}>
-              <FormLabel color="gray.700" fontWeight="medium">
+              <FormLabel color="text-primary" fontWeight="medium">
                 E-mail
               </FormLabel>
               <Input
                 type="email"
                 placeholder="admin@barbearia.com"
+                size="lg" // Inputs maiores são mais fáceis de tocar no celular
+                bg="bg-surface-secondary"
+                borderColor="border-subtle"
+                color="text-primary"
+                _hover={{ borderColor: "border-hover" }}
                 _focus={{
-                  borderColor: BRAND_COLOR,
-                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                  borderColor: "brand-primary",
+                  boxShadow: "focus-glow",
                 }}
                 {...register("email")}
               />
-              <FormErrorMessage>{errors.email?.message}</FormErrorMessage>
+              <FormErrorMessage color="status-error">
+                {errors.email?.message}
+              </FormErrorMessage>
             </FormControl>
 
             <FormControl isInvalid={!!errors.password}>
-              <FormLabel color="gray.700" fontWeight="medium">
+              <FormLabel color="text-primary" fontWeight="medium">
                 Senha
               </FormLabel>
               <Input
                 type="password"
                 placeholder="********"
+                size="lg" // Inputs maiores são mais fáceis de tocar no celular
+                bg="bg-surface-secondary"
+                borderColor="border-subtle"
+                color="text-primary"
+                _hover={{ borderColor: "border-hover" }}
                 _focus={{
-                  borderColor: BRAND_COLOR,
-                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                  borderColor: "brand-primary",
+                  boxShadow: "focus-glow",
                 }}
                 {...register("password")}
               />
-              <FormErrorMessage>{errors.password?.message}</FormErrorMessage>
+              <FormErrorMessage color="status-error">
+                {errors.password?.message}
+              </FormErrorMessage>
             </FormControl>
 
             <Button
               type="submit"
-              bg={BRAND_COLOR}
+              bg="brand-primary"
               color="white"
-              _hover={{ bg: BRAND_HOVER }}
+              _hover={{ bg: "brand-hover" }}
+              _active={{ bg: "brand-active" }}
               size="lg"
               fontSize="md"
+              w="100%" // Garante que o botão preencha toda a largura disponível
               isLoading={isPending}
               mt={2}
             >

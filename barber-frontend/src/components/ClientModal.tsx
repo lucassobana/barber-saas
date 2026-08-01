@@ -13,8 +13,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { BaseModal } from "./BaseModal";
 
-const BRAND_COLOR = "#904D22";
-
 export interface Client {
   id: string;
   name: string;
@@ -95,42 +93,54 @@ export function ClientModal({ isOpen, onClose, client }: ClientModalProps) {
     >
       <VStack spacing={4}>
         <FormControl isRequired>
-          <FormLabel>Nome Completo</FormLabel>
+          <FormLabel color="text-primary">Nome Completo</FormLabel>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ex: Carlos Almeida"
+            bg="bg-surface-secondary"
+            borderColor="border-subtle"
+            color="text-primary"
+            _hover={{ borderColor: "border-hover" }}
             _focus={{
-              borderColor: BRAND_COLOR,
-              boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+              borderColor: "brand-primary",
+              boxShadow: `0 0 0 1px {brand-primary}`,
             }}
           />
         </FormControl>
 
         <FormControl isRequired>
-          <FormLabel>Telefone / WhatsApp</FormLabel>
+          <FormLabel color="text-primary">Telefone / WhatsApp</FormLabel>
           <Input
             value={phone}
             onChange={(e) => setPhone(e.target.value)}
             placeholder="(00) 00000-0000"
+            bg="bg-surface-secondary"
+            borderColor="border-subtle"
+            color="text-primary"
+            _hover={{ borderColor: "border-hover" }}
             _focus={{
-              borderColor: BRAND_COLOR,
-              boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+              borderColor: "brand-primary",
+              boxShadow: `0 0 0 1px {brand-primary}`,
             }}
           />
         </FormControl>
 
         <FormControl>
-          <FormLabel>Observações (Opcional)</FormLabel>
+          <FormLabel color="text-primary">Observações (Opcional)</FormLabel>
           <Textarea
             value={notes}
             onChange={(e) => setNotes(e.target.value)}
             placeholder="Alergias, preferências de corte, etc."
             rows={3}
             resize="none"
+            bg="bg-surface-secondary"
+            borderColor="border-subtle"
+            color="text-primary"
+            _hover={{ borderColor: "border-hover" }}
             _focus={{
-              borderColor: BRAND_COLOR,
-              boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+              borderColor: "brand-primary",
+              boxShadow: `0 0 0 1px {brand-primary}`,
             }}
           />
         </FormControl>

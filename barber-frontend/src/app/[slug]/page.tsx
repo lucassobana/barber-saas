@@ -20,11 +20,6 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 import { BookingModal } from "@/components/BookingModal";
 
-const BRAND_COLOR = "#904D22";
-const BRAND_HOVER = "#733c19";
-const BRAND_LIGHT = "#FDF8F5";
-const TEXT_DARK = "#3D3D3D";
-
 export interface PublicBarbershop {
   id: string;
   name: string;
@@ -70,16 +65,16 @@ export default function VitrinePage() {
 
   if (isLoading) {
     return (
-      <Center h="100vh" bg={BRAND_LIGHT}>
-        <Spinner size="xl" color={BRAND_COLOR} thickness="4px" />
+      <Center h="100vh" bg="bg-app">
+        <Spinner size="xl" color="brand-primary" thickness="4px" />
       </Center>
     );
   }
 
   if (isError || !barbershop) {
     return (
-      <Center h="100vh" bg={BRAND_LIGHT} p={4} textAlign="center">
-        <Text color="gray.500" fontSize="lg">
+      <Center h="100vh" bg="bg-app" p={4} textAlign="center">
+        <Text color="status-error" fontSize="lg">
           Barbearia não encontrada. Verifique o link e tente novamente.
         </Text>
       </Center>
@@ -87,54 +82,60 @@ export default function VitrinePage() {
   }
 
   return (
-    <Box bg={BRAND_LIGHT} minH="100vh" pb={20}>
+    <Box bg="bg-app" minH="100vh" pb={20}>
+      {/* CABEÇALHO RESPONSIVO */}
       <Box
-        bg="white"
-        pt={12}
-        pb={16}
+        bg="bg-surface"
+        pt={{ base: 8, sm: 12 }} // Menos padding no topo para mobile
+        pb={{ base: 12, sm: 16 }}
         px={4}
         textAlign="center"
         borderBottomWidth="1px"
-        borderColor="gray.200"
-        shadow="sm"
+        borderColor="border-subtle"
+        shadow="card-shadow"
       >
         <Flex justify="center" mb={4}>
           <Image
             src="/ProximoCorteLogo.png"
             alt="PróximoCorte"
-            h="160px"
+            h={{ base: "100px", sm: "140px" }} // Logo menor no celular para dar espaço ao conteúdo
             objectFit="contain"
             fallback={
-              <Heading size="xl" color={TEXT_DARK}>
+              <Heading size={{ base: "lg", sm: "xl" }} color="text-primary">
                 {barbershop.name}
               </Heading>
             }
           />
         </Flex>
-        <Heading size="md" color={TEXT_DARK} mb={2}>
+        <Heading size={{ base: "sm", sm: "md" }} color="text-primary" mb={1}>
           {barbershop.name}
         </Heading>
-        <Text color="gray.500" fontSize="sm" fontWeight="medium">
+        <Text
+          color="text-secondary"
+          fontSize={{ base: "xs", sm: "sm" }}
+          fontWeight="medium"
+        >
           Aberto das {barbershop.openTime} às {barbershop.closeTime}
         </Text>
       </Box>
 
-      <Container maxW="md" mt={-8}>
+      {/* CONTAINER DE SERVIÇOS */}
+      <Container maxW="md" mt={{ base: -6, sm: -8 }} px={{ base: 4, sm: 0 }}>
         <Box
-          bg="white"
+          bg="bg-surface"
           borderRadius="2xl"
-          shadow="lg"
+          shadow="card-shadow"
           overflow="hidden"
           borderWidth="1px"
-          borderColor="gray.100"
+          borderColor="border-subtle"
         >
           <Box
-            p={5}
-            bg="gray.50"
+            p={{ base: 4, sm: 5 }}
+            bg="bg-surface-secondary"
             borderBottomWidth="1px"
-            borderColor="gray.100"
+            borderColor="border-subtle"
           >
-            <Heading size="sm" color="gray.700" textAlign="center">
+            <Heading size="sm" color="text-primary" textAlign="center">
               Escolha um serviço
             </Heading>
           </Box>
@@ -142,35 +143,55 @@ export default function VitrinePage() {
           <VStack
             align="stretch"
             spacing={0}
-            divider={<Divider borderColor="gray.100" />}
+            divider={<Divider borderColor="border-subtle" />}
           >
             {barbershop.services.map((service) => (
               <Flex
                 key={service.id}
-                p={5}
+                p={{ base: 4, sm: 5 }} // Ajuste de padding interno no mobile
                 align="center"
                 justify="space-between"
-                _hover={{ bg: "gray.50" }}
+                gap={3} // Garante espaço mínimo entre texto e botão
+                _hover={{ bg: "bg-surface-hover" }}
                 transition="background 0.2s"
               >
-                <Box>
-                  <Text fontWeight="bold" color={TEXT_DARK}>
+                <Box flex="1" minW="0">
+                  {" "}
+                  {/* minW="0" permite o text-truncation funcionar */}
+                  <Text
+                    fontWeight="bold"
+                    color="text-primary"
+                    fontSize={{ base: "sm", sm: "md" }}
+                    noOfLines={2} // Impede que o título seja gigantesco e quebre a tela
+                  >
                     {service.name}
                   </Text>
-                  <Text fontSize="sm" color="gray.500" mt={0.5}>
+                  <Text
+                    fontSize={{ base: "xs", sm: "sm" }}
+                    color="text-secondary"
+                    mt={0.5}
+                  >
                     ⏱ {service.duration} min
                   </Text>
-                  <Text fontWeight="bold" color={BRAND_COLOR} mt={1}>
+                  <Text
+                    fontWeight="bold"
+                    color="brand-primary"
+                    mt={1}
+                    fontSize={{ base: "sm", sm: "md" }}
+                  >
                     {formatPrice(service.price)}
                   </Text>
                 </Box>
+
                 <Button
-                  bg={BRAND_COLOR}
+                  bg="brand-primary"
                   color="white"
-                  _hover={{ bg: BRAND_HOVER }}
-                  size="sm"
+                  _hover={{ bg: "brand-hover" }}
+                  _active={{ bg: "brand-active" }}
+                  size={{ base: "md", sm: "sm" }} // Botão mais gordinho no mobile para facilitar o toque
                   borderRadius="full"
-                  px={6}
+                  px={{ base: 5, sm: 6 }}
+                  flexShrink={0} // Impede que o botão seja espremido
                   onClick={() => handleOpenBooking(service)}
                 >
                   Agendar
@@ -180,7 +201,7 @@ export default function VitrinePage() {
 
             {barbershop.services.length === 0 && (
               <Box p={8} textAlign="center">
-                <Text color="gray.500">
+                <Text color="text-muted" fontSize="sm">
                   Nenhum serviço disponível no momento.
                 </Text>
               </Box>

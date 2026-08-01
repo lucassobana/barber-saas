@@ -20,11 +20,6 @@ import { useState, Suspense } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { api } from "@/lib/api";
 
-const BRAND_COLOR = "#904D22";
-const BRAND_HOVER = "#733c19";
-const BRAND_LIGHT = "#FDF8F5";
-const TEXT_DARK = "#3D3D3D";
-
 function SetupPasswordForm() {
   const searchParams = useSearchParams();
   const token = searchParams.get("token");
@@ -38,7 +33,7 @@ function SetupPasswordForm() {
   if (!token) {
     return (
       <Center h="full" py={20}>
-        <Text color="red.500" fontWeight="medium" fontSize="lg">
+        <Text color="status-error" fontWeight="medium" fontSize="lg">
           Link de convite ausente ou inválido.
         </Text>
       </Center>
@@ -95,14 +90,14 @@ function SetupPasswordForm() {
   };
 
   return (
-    <Container maxW="md" py={{ base: 12, md: 24 }}>
+    <Container maxW="md" py={{ base: 12, md: 24 }} px={4}>
       <Box
-        bg="white"
-        p={8}
+        bg="bg-surface"
+        p={{ base: 6, md: 8 }} // Padding responsivo do card
         borderRadius="xl"
-        shadow="lg"
+        shadow="card-shadow"
         borderWidth="1px"
-        borderColor="gray.100"
+        borderColor="border-subtle"
       >
         <VStack spacing={6} align="stretch">
           <Box textAlign="center">
@@ -110,19 +105,23 @@ function SetupPasswordForm() {
               <Image
                 src="/ProximoCorteLogo.png"
                 alt="PróximoCorte"
-                h="240px"
+                h={{ base: "180px", md: "200px" }} // Altura da logo responsiva
                 objectFit="contain"
                 fallback={
-                  <Heading size="lg" color={TEXT_DARK}>
+                  <Heading size="lg" color="text-primary">
                     PróximoCorte
                   </Heading>
                 }
               />
             </Flex>
-            <Heading size="md" color={TEXT_DARK}>
+            <Heading size="md" color="text-primary">
               Crie sua senha
             </Heading>
-            <Text color="gray.500" mt={2} fontSize="sm">
+            <Text
+              color="text-secondary"
+              mt={2}
+              fontSize={{ base: "xs", md: "sm" }}
+            >
               Defina uma senha segura para acessar sua conta na plataforma.
             </Text>
           </Box>
@@ -130,38 +129,49 @@ function SetupPasswordForm() {
           <form onSubmit={handleSubmit}>
             <VStack spacing={4}>
               <FormControl isRequired>
-                <FormLabel>Nova Senha</FormLabel>
+                <FormLabel color="text-primary">Nova Senha</FormLabel>
                 <Input
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="Mínimo de 6 caracteres"
+                  size="lg" // Inputs maiores para touch
+                  bg="bg-surface-secondary"
+                  borderColor="border-subtle"
+                  color="text-primary"
+                  _hover={{ borderColor: "border-hover" }}
                   _focus={{
-                    borderColor: BRAND_COLOR,
-                    boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                    borderColor: "brand-primary",
+                    boxShadow: "focus-glow",
                   }}
                 />
               </FormControl>
 
               <FormControl isRequired>
-                <FormLabel>Confirme a Senha</FormLabel>
+                <FormLabel color="text-primary">Confirme a Senha</FormLabel>
                 <Input
                   type="password"
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}
                   placeholder="Repita a nova senha"
+                  size="lg" // Inputs maiores para touch
+                  bg="bg-surface-secondary"
+                  borderColor="border-subtle"
+                  color="text-primary"
+                  _hover={{ borderColor: "border-hover" }}
                   _focus={{
-                    borderColor: BRAND_COLOR,
-                    boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                    borderColor: "brand-primary",
+                    boxShadow: "focus-glow",
                   }}
                 />
               </FormControl>
 
               <Button
                 type="submit"
-                bg={BRAND_COLOR}
+                bg="brand-primary"
                 color="white"
-                _hover={{ bg: BRAND_HOVER }}
+                _hover={{ bg: "brand-hover" }}
+                _active={{ bg: "brand-active" }}
                 w="full"
                 size="lg"
                 mt={4}
@@ -179,11 +189,11 @@ function SetupPasswordForm() {
 
 export default function SetupPasswordPage() {
   return (
-    <Box minH="100vh" bg={BRAND_LIGHT}>
+    <Box minH="100vh" bg="bg-app">
       <Suspense
         fallback={
           <Center h="100vh">
-            <Spinner color={BRAND_COLOR} size="xl" />
+            <Spinner color="brand-primary" size="xl" />
           </Center>
         }
       >

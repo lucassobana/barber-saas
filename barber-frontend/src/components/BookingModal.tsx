@@ -69,7 +69,6 @@ export function BookingModal({
   const [clientName, setClientName] = useState("");
   const [clientPhone, setClientPhone] = useState("");
 
-  // NOVA LÓGICA: Busca os horários livres no backend
   const { data: availableTimes = [], isLoading: isLoadingTimes } = useQuery<
     string[]
   >({
@@ -84,7 +83,6 @@ export function BookingModal({
       });
       return response.data;
     },
-    // Só dispara a busca se o barbeiro, a data e o serviço estiverem selecionados
     enabled: !!selectedBarber && !!selectedDate && !!service?.id,
   });
 
@@ -161,19 +159,27 @@ export function BookingModal({
   return (
     <Modal isOpen={isOpen} onClose={handleClose} size="md" isCentered>
       <ModalOverlay />
-      <ModalContent>
-        <ModalHeader borderBottomWidth="1px" borderColor="gray.100">
-          <Text fontSize="lg">Agendar {service?.name}</Text>
-          <Text fontSize="sm" color="gray.500" fontWeight="normal">
+      <ModalContent
+        bg="bg-surface"
+        borderColor="border-subtle"
+        borderWidth="1px"
+        shadow="card-shadow"
+        mx={4}
+      >
+        <ModalHeader borderBottomWidth="1px" borderColor="border-subtle">
+          <Text fontSize="lg" color="text-primary">
+            Agendar {service?.name}
+          </Text>
+          <Text fontSize="sm" color="text-secondary" fontWeight="normal">
             Passo {step + 1} de 3
           </Text>
         </ModalHeader>
-        <ModalCloseButton />
+        <ModalCloseButton color="text-secondary" />
 
         <ModalBody py={6}>
           {step === 0 && (
             <VStack align="stretch" spacing={3}>
-              <Text fontWeight="medium" color="gray.900" mb={2}>
+              <Text fontWeight="medium" color="text-primary" mb={2}>
                 Com quem você quer cortar?
               </Text>
               {barbershop.barbers.map((barber) => (
@@ -183,17 +189,29 @@ export function BookingModal({
                   borderWidth="1px"
                   borderRadius="lg"
                   borderColor={
-                    selectedBarber === barber.id ? "blue.500" : "gray.200"
+                    selectedBarber === barber.id
+                      ? "brand-primary"
+                      : "border-subtle"
                   }
-                  bg={selectedBarber === barber.id ? "blue.50" : "white"}
+                  bg={
+                    selectedBarber === barber.id
+                      ? "brand-soft"
+                      : "bg-surface-secondary"
+                  }
                   align="center"
                   gap={4}
                   cursor="pointer"
                   onClick={() => setSelectedBarber(barber.id)}
-                  _hover={{ borderColor: "blue.500" }}
+                  _hover={{ borderColor: "brand-primary" }}
+                  transition="all 0.2s"
                 >
-                  <Avatar size="sm" name={barber.name} bg="blue.500" />
-                  <Text fontWeight="medium" color="gray.900">
+                  <Avatar
+                    size="sm"
+                    name={barber.name}
+                    bg="brand-primary"
+                    color="white"
+                  />
+                  <Text fontWeight="medium" color="text-primary">
                     {barber.name}
                   </Text>
                 </Flex>
@@ -204,27 +222,40 @@ export function BookingModal({
           {step === 1 && (
             <VStack align="stretch" spacing={5}>
               <FormControl isRequired>
-                <FormLabel>Escolha a Data</FormLabel>
+                <FormLabel color="text-primary">Escolha a Data</FormLabel>
                 <Input
                   type="date"
                   value={selectedDate}
                   onChange={(e) => {
                     setSelectedDate(e.target.value);
-                    setSelectedTime(""); // Reseta o horário selecionado ao trocar de data
+                    setSelectedTime("");
                   }}
                   min={new Date().toISOString().split("T")[0]}
+                  bg="bg-surface-secondary"
+                  borderColor="border-subtle"
+                  color="text-primary"
+                  _hover={{ borderColor: "border-hover" }}
+                  _focus={{
+                    borderColor: "brand-primary",
+                    boxShadow: "focus-glow",
+                  }}
+                  sx={{
+                    "::-webkit-calendar-picker-indicator": {
+                      filter: "invert(0.8)",
+                    },
+                  }}
                 />
               </FormControl>
 
               {selectedDate && (
                 <Box>
-                  <Text fontWeight="medium" color="gray.900" mb={3}>
+                  <Text fontWeight="medium" color="text-primary" mb={3}>
                     Horários disponíveis
                   </Text>
 
                   {isLoadingTimes ? (
                     <Center py={4}>
-                      <Spinner color="blue.500" />
+                      <Spinner color="brand-primary" />
                     </Center>
                   ) : availableTimes.length > 0 ? (
                     <SimpleGrid columns={3} spacing={3}>
@@ -232,7 +263,27 @@ export function BookingModal({
                         <Button
                           key={time}
                           variant={selectedTime === time ? "solid" : "outline"}
-                          colorScheme={selectedTime === time ? "blue" : "gray"}
+                          bg={
+                            selectedTime === time
+                              ? "brand-primary"
+                              : "transparent"
+                          }
+                          color={
+                            selectedTime === time ? "white" : "text-secondary"
+                          }
+                          borderColor={
+                            selectedTime === time
+                              ? "brand-primary"
+                              : "border-subtle"
+                          }
+                          _hover={{
+                            bg:
+                              selectedTime === time
+                                ? "brand-hover"
+                                : "bg-surface-hover",
+                            color:
+                              selectedTime === time ? "white" : "text-primary",
+                          }}
                           onClick={() => setSelectedTime(time)}
                           size="sm"
                         >
@@ -242,7 +293,7 @@ export function BookingModal({
                     </SimpleGrid>
                   ) : (
                     <Text
-                      color="red.500"
+                      color="status-error"
                       fontSize="sm"
                       textAlign="center"
                       py={4}
@@ -258,27 +309,55 @@ export function BookingModal({
           {step === 2 && (
             <VStack align="stretch" spacing={4}>
               <FormControl isRequired>
-                <FormLabel>Seu Nome</FormLabel>
+                <FormLabel color="text-primary">Seu Nome</FormLabel>
                 <Input
                   value={clientName}
                   onChange={(e) => setClientName(e.target.value)}
                   placeholder="Ex: Lucas Sawada"
+                  bg="bg-surface-secondary"
+                  borderColor="border-subtle"
+                  color="text-primary"
+                  _hover={{ borderColor: "border-hover" }}
+                  _focus={{
+                    borderColor: "brand-primary",
+                    boxShadow: "focus-glow",
+                  }}
                 />
               </FormControl>
 
               <FormControl isRequired>
-                <FormLabel>WhatsApp / Telefone</FormLabel>
+                <FormLabel color="text-primary">WhatsApp / Telefone</FormLabel>
                 <Input
                   type="tel"
                   value={clientPhone}
                   onChange={(e) => setClientPhone(e.target.value)}
                   placeholder="(00) 90000-0000"
+                  bg="bg-surface-secondary"
+                  borderColor="border-subtle"
+                  color="text-primary"
+                  _hover={{ borderColor: "border-hover" }}
+                  _focus={{
+                    borderColor: "brand-primary",
+                    boxShadow: "focus-glow",
+                  }}
                 />
               </FormControl>
 
-              <Box bg="gray.50" p={4} borderRadius="md" mt={2}>
-                <Text fontSize="sm" color="gray.600">
-                  <strong>Resumo:</strong> {service?.name} dia{" "}
+              <Box
+                bg="bg-surface-secondary"
+                p={4}
+                borderRadius="md"
+                mt={2}
+                borderColor="border-subtle"
+                borderWidth="1px"
+              >
+                <Text fontSize="sm" color="text-secondary">
+                  <strong
+                    style={{ color: "var(--chakra-colors-text-primary)" }}
+                  >
+                    Resumo:
+                  </strong>{" "}
+                  {service?.name} dia{" "}
                   {selectedDate.split("-").reverse().join("/")} às{" "}
                   {selectedTime}.
                 </Text>
@@ -287,13 +366,20 @@ export function BookingModal({
           )}
         </ModalBody>
 
-        <ModalFooter bg="gray.50" borderTopWidth="1px" borderColor="gray.100">
+        <ModalFooter
+          bg="bg-surface-secondary"
+          borderTopWidth="1px"
+          borderColor="border-subtle"
+          borderBottomRadius="md"
+        >
           <Flex w="full" justify={step === 0 ? "flex-end" : "space-between"}>
             {step > 0 && (
               <Button
                 variant="ghost"
                 onClick={handlePrevStep}
                 isDisabled={mutation.isPending}
+                color="text-primary"
+                _hover={{ bg: "bg-surface-hover" }}
               >
                 Voltar
               </Button>
@@ -301,7 +387,10 @@ export function BookingModal({
 
             {step < 2 ? (
               <Button
-                colorScheme="blue"
+                bg="brand-primary"
+                color="white"
+                _hover={{ bg: "brand-hover" }}
+                _active={{ bg: "brand-active" }}
                 onClick={handleNextStep}
                 isDisabled={isNextDisabled()}
               >
@@ -309,7 +398,9 @@ export function BookingModal({
               </Button>
             ) : (
               <Button
-                colorScheme="green"
+                bg="status-success"
+                color="white"
+                _hover={{ filter: "brightness(1.1)" }}
                 onClick={handleConfirm}
                 isDisabled={isNextDisabled()}
                 isLoading={mutation.isPending}

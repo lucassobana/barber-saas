@@ -28,9 +28,6 @@ import { useState } from "react";
 import { api } from "@/lib/api";
 import { Client, ClientModal } from "@/components/ClientModal";
 
-const BRAND_COLOR = "#904D22";
-const BRAND_HOVER = "#733c19";
-
 export default function ClientesPage() {
   const { isOpen, onOpen, onClose } = useDisclosure();
   const [selectedClient, setSelectedClient] = useState<Client | null>(null);
@@ -48,6 +45,7 @@ export default function ClientesPage() {
     setSelectedClient(null);
     onOpen();
   };
+
   const handleOpenEditModal = (client: Client) => {
     setSelectedClient(client);
     onOpen();
@@ -55,26 +53,29 @@ export default function ClientesPage() {
 
   return (
     <Box>
+      {/* CABEÇALHO RESPONSIVO */}
       <Flex
         direction={{ base: "column", sm: "row" }}
         justify="space-between"
-        align={{ base: "start", sm: "center" }}
+        align={{ base: "stretch", sm: "center" }}
         mb={6}
         gap={4}
       >
-        <Box>
-          <Heading size="lg" color="gray.900">
+        <Box textAlign={{ base: "center", sm: "left" }}>
+          <Heading size="lg" color="text-primary">
             Clientes
           </Heading>
-          <Text color="gray.500" mt={1}>
+          <Text color="text-secondary" mt={1}>
             Sua base de clientes e histórico
           </Text>
         </Box>
         <Button
-          size="sm"
-          bg={BRAND_COLOR}
+          size="md"
+          w={{ base: "full", sm: "auto" }}
+          bg="brand-primary"
           color="white"
-          _hover={{ bg: BRAND_HOVER }}
+          _hover={{ bg: "brand-hover" }}
+          _active={{ bg: "brand-active" }}
           leftIcon={<Plus size={16} />}
           onClick={handleOpenCreateModal}
         >
@@ -83,135 +84,185 @@ export default function ClientesPage() {
       </Flex>
 
       <Box
-        bg="white"
+        bg="bg-surface"
         borderRadius="xl"
         borderWidth="1px"
-        borderColor="gray.200"
-        shadow="sm"
+        borderColor="border-subtle"
+        shadow="card-shadow"
         overflow="hidden"
       >
         {isLoading && (
           <Center p={10}>
-            <Spinner color={BRAND_COLOR} size="xl" />
+            <Spinner color="brand-primary" size="xl" />
           </Center>
         )}
         {isError && (
           <Center p={10}>
-            <Text color="red.500">Erro ao carregar os clientes.</Text>
+            <Text color="status-error">Erro ao carregar os clientes.</Text>
           </Center>
         )}
         {!isLoading && !isError && (
           <>
+            {/* VISUALIZAÇÃO DESKTOP: TABELA */}
             <Box display={{ base: "none", md: "block" }} overflowX="auto">
               <Table variant="simple" size="md">
-                <Thead bg="gray.50">
+                <Thead bg="bg-surface-secondary">
                   <Tr>
-                    <Th>Cliente</Th>
-                    <Th>Telefone</Th>
-                    <Th>Info</Th>
-                    <Th></Th>
+                    <Th color="text-secondary" borderColor="border-subtle">
+                      Cliente
+                    </Th>
+                    <Th color="text-secondary" borderColor="border-subtle">
+                      Telefone
+                    </Th>
+                    <Th color="text-secondary" borderColor="border-subtle">
+                      Info
+                    </Th>
+                    <Th borderColor="border-subtle"></Th>
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {clients.map((c) => (
-                    <Tr key={c.id} _hover={{ bg: "gray.50" }}>
-                      <Td>
-                        <HStack spacing={3}>
-                          <Avatar
-                            size="sm"
-                            name={c.name}
-                            bg={BRAND_COLOR}
-                            color="white"
-                          />
-                          <Text fontWeight="medium" color="gray.900">
-                            {c.name}
-                          </Text>
-                        </HStack>
-                      </Td>
-                      <Td color="gray.600">{c.phone}</Td>
-                      <Td>
-                        {c.notes ? (
-                          <Badge colorScheme="orange" variant="subtle">
-                            Tem observações
-                          </Badge>
-                        ) : (
-                          <Text color="gray.400" fontSize="sm">
-                            -
-                          </Text>
-                        )}
-                      </Td>
-                      <Td textAlign="right">
-                        <IconButton
-                          aria-label="Opções"
-                          icon={<MoreHorizontal size={16} />}
-                          size="sm"
-                          variant="ghost"
-                          color="gray.400"
-                          onClick={() => handleOpenEditModal(c)}
-                        />
-                      </Td>
-                    </Tr>
-                  ))}
                   {clients.length === 0 && (
                     <Tr>
                       <Td
                         colSpan={4}
                         textAlign="center"
                         py={6}
-                        color="gray.500"
+                        color="text-muted"
+                        borderColor="border-subtle"
                       >
                         Nenhum cliente cadastrado.
                       </Td>
                     </Tr>
                   )}
+                  {clients.map((c) => (
+                    <Tr
+                      key={c.id}
+                      _hover={{ bg: "bg-surface-secondary" }}
+                      transition="background 0.2s"
+                    >
+                      <Td borderColor="border-subtle">
+                        <HStack spacing={3}>
+                          <Avatar
+                            size="sm"
+                            name={c.name}
+                            bg="brand-primary"
+                            color="white"
+                          />
+                          <Text fontWeight="medium" color="text-primary">
+                            {c.name}
+                          </Text>
+                        </HStack>
+                      </Td>
+                      <Td color="text-secondary" borderColor="border-subtle">
+                        {c.phone}
+                      </Td>
+                      <Td borderColor="border-subtle">
+                        {c.notes ? (
+                          <Badge
+                            bg="brand-soft"
+                            color="brand-primary"
+                            px={2}
+                            py={0.5}
+                            borderRadius="md"
+                          >
+                            Tem observações
+                          </Badge>
+                        ) : (
+                          <Text color="text-muted" fontSize="sm">
+                            -
+                          </Text>
+                        )}
+                      </Td>
+                      <Td textAlign="right" borderColor="border-subtle">
+                        <IconButton
+                          aria-label="Opções"
+                          icon={<MoreHorizontal size={16} />}
+                          size="sm"
+                          variant="ghost"
+                          color="text-muted"
+                          _hover={{
+                            color: "text-primary",
+                            bg: "bg-surface-hover",
+                          }}
+                          onClick={() => handleOpenEditModal(c)}
+                        />
+                      </Td>
+                    </Tr>
+                  ))}
                 </Tbody>
               </Table>
             </Box>
-            <Box display={{ base: "block", md: "none" }}>
-              <VStack align="stretch" spacing={0} divider={<Divider />}>
-                {clients.map((c) => (
-                  <Box
-                    key={c.id}
-                    p={4}
-                    onClick={() => handleOpenEditModal(c)}
-                    cursor="pointer"
-                  >
-                    <Flex align="center" gap={3}>
-                      <Avatar
-                        size="sm"
-                        name={c.name}
-                        bg={BRAND_COLOR}
-                        color="white"
-                      />
-                      <Box flex="1">
-                        <Text
-                          fontSize="sm"
-                          fontWeight="semibold"
-                          color="gray.900"
-                        >
-                          {c.name}
-                        </Text>
-                        <Text fontSize="xs" color="gray.500" mt={0.5}>
-                          {c.phone}
-                        </Text>
-                      </Box>
-                      {c.notes && (
-                        <Badge
-                          colorScheme="orange"
-                          variant="subtle"
-                          fontSize="2xs"
-                        >
-                          Obs
-                        </Badge>
-                      )}
-                    </Flex>
-                  </Box>
-                ))}
+
+            {/* VISUALIZAÇÃO MOBILE: CARDS/LISTA */}
+            <Box display={{ base: "block", md: "none" }} p={2}>
+              <VStack
+                align="stretch"
+                spacing={2}
+                divider={<Divider borderColor="border-subtle" />}
+              >
                 {clients.length === 0 && (
-                  <Box p={6} textAlign="center" color="gray.500">
+                  <Box p={6} textAlign="center" color="text-muted">
                     Nenhum cliente cadastrado.
                   </Box>
                 )}
+                {clients.map((c) => (
+                  <Flex
+                    key={c.id}
+                    p={3}
+                    align="center"
+                    justify="space-between"
+                    onClick={() => handleOpenEditModal(c)}
+                    cursor="pointer"
+                    _hover={{ bg: "bg-surface-secondary" }}
+                    borderRadius="md"
+                    transition="background 0.2s"
+                  >
+                    <Flex align="center" gap={4}>
+                      <Avatar
+                        size="md"
+                        name={c.name}
+                        bg="brand-primary"
+                        color="white"
+                      />
+                      <Box>
+                        <Text
+                          fontSize="md"
+                          fontWeight="bold"
+                          color="text-primary"
+                        >
+                          {c.name}
+                        </Text>
+                        <Text fontSize="sm" color="text-secondary">
+                          {c.phone}
+                        </Text>
+                        {c.notes && (
+                          <Badge
+                            bg="brand-soft"
+                            color="brand-primary"
+                            px={2}
+                            borderRadius="md"
+                            fontSize="2xs"
+                            mt={1}
+                          >
+                            Obs
+                          </Badge>
+                        )}
+                      </Box>
+                    </Flex>
+                    <IconButton
+                      aria-label="Opções"
+                      icon={<MoreHorizontal size={20} />}
+                      size="sm"
+                      variant="ghost"
+                      color="text-muted"
+                      _hover={{ color: "text-primary", bg: "bg-surface-hover" }}
+                      onClick={(e) => {
+                        e.stopPropagation(); // Evita que o modal abra duas vezes
+                        handleOpenEditModal(c);
+                      }}
+                    />
+                  </Flex>
+                ))}
               </VStack>
             </Box>
           </>

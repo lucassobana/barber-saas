@@ -4,6 +4,7 @@ import { ChakraProvider } from "@chakra-ui/react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { AuthProvider } from "@/contexts/AuthContext";
 import { useState, useEffect } from "react";
+import { theme } from "@/lib/theme";
 
 export function AppProviders({ children }: { children: React.ReactNode }) {
   const [queryClient] = useState(() => new QueryClient());
@@ -19,7 +20,7 @@ export function AppProviders({ children }: { children: React.ReactNode }) {
     <QueryClientProvider client={queryClient}>
       {/* Só carrega o Chakra e a Autenticação DEPOIS que sair do servidor */}
       {isMounted ? (
-        <ChakraProvider>
+        <ChakraProvider theme={theme}>
           <AuthProvider>{children}</AuthProvider>
         </ChakraProvider>
       ) : (

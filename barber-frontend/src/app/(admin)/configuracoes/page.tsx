@@ -19,9 +19,10 @@ import {
   Divider,
   Spinner,
   Center,
-  InputLeftAddon, Checkbox,
+  InputLeftAddon,
+  Checkbox,
   CheckboxGroup,
-  Wrap
+  Wrap,
 } from "@chakra-ui/react";
 import {
   Copy,
@@ -29,15 +30,12 @@ import {
   Store,
   Link as LinkIcon,
   ExternalLink,
+  LogOut,
 } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { useAuth } from "@/contexts/AuthContext";
 import Link from "next/link";
-
-const BRAND_COLOR = "#904D22";
-const BRAND_HOVER = "#733c19";
-const BRAND_SOFT = "#F9F2ED";
 
 interface Barbershop {
   id: string;
@@ -74,13 +72,13 @@ export default function ConfiguracoesPage() {
   if (authLoading || queryLoading)
     return (
       <Center h="60vh">
-        <Spinner size="xl" color={BRAND_COLOR} thickness="4px" />
+        <Spinner size="xl" color="brand-primary" thickness="4px" />
       </Center>
     );
   if (!barbershopId || !barbershop)
     return (
       <Center h="60vh">
-        <Text color="gray.500">Barbearia não encontrada.</Text>
+        <Text color="text-muted">Barbearia não encontrada.</Text>
       </Center>
     );
   return (
@@ -101,6 +99,8 @@ function ConfiguracoesForm({
 }) {
   const toast = useToast();
   const queryClient = useQueryClient();
+  const { signOut } = useAuth();
+
   const [name, setName] = useState(barbershop.name || "");
   const [openTime, setOpenTime] = useState(barbershop.openTime || "");
   const [closeTime, setCloseTime] = useState(barbershop.closeTime || "");
@@ -124,59 +124,79 @@ function ConfiguracoesForm({
       : "";
 
   return (
-    <Box maxW="4xl">
-      <Flex direction="column" mb={8}>
-        <Heading size="lg" color="gray.900">
+    <Box maxW="4xl" pb={{ base: 8, md: 0 }}>
+      {/* CABEÇALHO */}
+      <Flex
+        direction="column"
+        mb={{ base: 6, sm: 8 }}
+        textAlign={{ base: "center", sm: "left" }}
+      >
+        <Heading size="lg" color="text-primary">
           Configurações da Loja
         </Heading>
-        <Text color="gray.500" mt={1}>
+        <Text color="text-secondary" mt={1}>
           Gerencie as informações públicas e horários de funcionamento
         </Text>
       </Flex>
 
       <Box
-        bg="white"
+        bg="bg-surface"
         borderRadius="xl"
         borderWidth="1px"
-        borderColor="gray.200"
-        shadow="sm"
+        borderColor="border-subtle"
+        shadow="card-shadow"
         overflow="hidden"
       >
-        <Box p={6} bg="gray.50" borderBottomWidth="1px" borderColor="gray.100">
+        {/* SESSÃO DO LINK DA VITRINE */}
+        <Box
+          p={{ base: 4, sm: 6 }}
+          bg="bg-surface-secondary"
+          borderBottomWidth="1px"
+          borderColor="border-subtle"
+        >
           <Flex
-            direction={{ base: "column", sm: "row" }}
-            align={{ base: "start", sm: "center" }}
+            direction={{ base: "column", lg: "row" }}
+            align={{ base: "stretch", lg: "center" }}
             justify="space-between"
             gap={4}
           >
-            <HStack spacing={3}>
+            <HStack spacing={3} justify={{ base: "center", sm: "flex-start" }}>
               <Flex
                 h="10"
                 w="10"
                 align="center"
                 justify="center"
-                bg={BRAND_SOFT}
-                color={BRAND_COLOR}
+                bg="brand-soft"
+                color="brand-primary"
                 borderRadius="lg"
+                flexShrink={0}
               >
                 <LinkIcon size={20} />
               </Flex>
               <Box>
-                <Text fontWeight="semibold" color="gray.900">
+                <Text fontWeight="semibold" color="text-primary">
                   Seu link de agendamento
                 </Text>
-                <Text fontSize="sm" color="gray.500">
+                <Text fontSize="sm" color="text-secondary">
                   Compartilhe com seus clientes
                 </Text>
               </Box>
             </HStack>
-            <HStack w={{ base: "full", sm: "auto" }}>
-              <InputGroup size="md" w={{ base: "full", sm: "350px" }}>
+
+            <Flex
+              direction={{ base: "column", sm: "row" }}
+              gap={3}
+              w={{ base: "full", lg: "auto" }}
+            >
+              <InputGroup size="md" w="full">
                 <Input
                   isReadOnly
                   value={currentFullUrl}
-                  bg="white"
-                  color="gray.600"
+                  bg="bg-surface"
+                  color="text-primary"
+                  borderColor="border-subtle"
+                  textOverflow="ellipsis"
+                  _focus={{ borderColor: "border-subtle", boxShadow: "none" }}
                 />
                 <InputRightElement>
                   <IconButton
@@ -184,52 +204,83 @@ function ConfiguracoesForm({
                     icon={<Copy size={16} />}
                     size="sm"
                     variant="ghost"
-                    onClick={() =>
-                      navigator.clipboard.writeText(currentFullUrl)
-                    }
+                    color="text-secondary"
+                    _hover={{ bg: "bg-surface-hover", color: "text-primary" }}
+                    onClick={() => {
+                      navigator.clipboard.writeText(currentFullUrl);
+                      toast({
+                        title: "Link copiado!",
+                        status: "info",
+                        duration: 2000,
+                      });
+                    }}
                   />
                 </InputRightElement>
               </InputGroup>
-              <IconButton
+
+              <Button
                 as={Link}
                 href={`/${slug}`}
                 target="_blank"
-                aria-label="Abrir vitrine"
-                icon={<ExternalLink size={18} />}
+                leftIcon={<ExternalLink size={18} />}
                 variant="outline"
-                color={BRAND_COLOR}
-                borderColor={BRAND_COLOR}
-                _hover={{ bg: BRAND_SOFT }}
+                color="brand-primary"
+                borderColor="brand-primary"
+                _hover={{ bg: "brand-soft" }}
                 isDisabled={!slug}
-              />
-            </HStack>
+                w={{ base: "full", sm: "auto" }}
+                px={6}
+              >
+                Abrir Vitrine
+              </Button>
+            </Flex>
           </Flex>
         </Box>
 
-        <Box p={6}>
-          <HStack mb={6} spacing={2} color="gray.900">
+        {/* FORMULÁRIO DE DADOS */}
+        <Box p={{ base: 4, sm: 6 }}>
+          <HStack
+            mb={6}
+            spacing={2}
+            color="text-primary"
+            justify={{ base: "center", sm: "flex-start" }}
+          >
             <Store size={20} />
             <Heading size="md">Dados Básicos</Heading>
           </HStack>
+
           <VStack spacing={6} align="stretch">
             <FormControl>
-              <FormLabel fontWeight="medium">Nome da Barbearia</FormLabel>
+              <FormLabel fontWeight="medium" color="text-secondary">
+                Nome da Barbearia
+              </FormLabel>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 size="lg"
+                bg="bg-surface"
+                borderColor="border-subtle"
+                color="text-primary"
+                _hover={{ borderColor: "border-hover" }}
                 _focus={{
-                  borderColor: BRAND_COLOR,
-                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                  borderColor: "brand-primary",
+                  boxShadow: "focus-glow",
                 }}
               />
             </FormControl>
+
             <FormControl>
-              <FormLabel fontWeight="medium">
+              <FormLabel fontWeight="medium" color="text-secondary">
                 Link Personalizado (Slug)
               </FormLabel>
               <InputGroup size="lg">
-                <InputLeftAddon bg="gray.100" color="gray.500">
+                <InputLeftAddon
+                  bg="bg-surface-secondary"
+                  color="text-secondary"
+                  borderColor="border-subtle"
+                  px={{ base: 2, sm: 4 }}
+                  fontSize={{ base: "sm", sm: "md" }}
+                >
                   {typeof window !== "undefined"
                     ? window.location.host
                     : "localhost:3000"}
@@ -237,6 +288,9 @@ function ConfiguracoesForm({
                 </InputLeftAddon>
                 <Input
                   value={slug}
+                  bg="bg-surface"
+                  color="text-primary"
+                  borderColor="border-subtle"
                   onChange={(e) =>
                     setSlug(
                       e.target.value
@@ -245,64 +299,108 @@ function ConfiguracoesForm({
                         .replace(/(^-|-$)+/g, ""),
                     )
                   }
+                  _hover={{ borderColor: "border-hover" }}
                   _focus={{
-                    borderColor: BRAND_COLOR,
-                    boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                    borderColor: "brand-primary",
+                    boxShadow: "focus-glow",
                   }}
                 />
               </InputGroup>
             </FormControl>
-            <Divider my={2} />
+
+            <Divider my={2} borderColor="border-subtle" />
+
             <FormControl>
-              <FormLabel fontWeight="medium">Dias de Funcionamento</FormLabel>
+              <FormLabel fontWeight="medium" color="text-secondary">
+                Dias de Funcionamento
+              </FormLabel>
               <CheckboxGroup
-                colorScheme="orange"
                 value={openDays}
                 onChange={(values) => setOpenDays(values as string[])}
               >
-                <Wrap spacing={4}>
+                <Wrap
+                  spacing={4}
+                  justify={{ base: "center", sm: "flex-start" }}
+                >
                   {DAYS_OF_WEEK.map((day) => (
-                    <Checkbox key={day.value} value={day.value} size="lg">
+                    <Checkbox
+                      key={day.value}
+                      value={day.value}
+                      size="lg"
+                      color="text-primary"
+                      sx={{
+                        "span.chakra-checkbox__control[data-checked]": {
+                          backgroundColor: "brand-primary",
+                          borderColor: "brand-primary",
+                        },
+                      }}
+                    >
                       {day.label}
                     </Checkbox>
                   ))}
                 </Wrap>
               </CheckboxGroup>
             </FormControl>
-            <HStack w="full" spacing={4} align="start">
+
+            <Flex direction={{ base: "column", sm: "row" }} w="full" gap={4}>
               <FormControl>
-                <FormLabel fontWeight="medium">Horário de Abertura</FormLabel>
+                <FormLabel fontWeight="medium" color="text-secondary">
+                  Horário de Abertura
+                </FormLabel>
                 <Input
                   type="time"
                   value={openTime}
                   onChange={(e) => setOpenTime(e.target.value)}
                   size="lg"
+                  bg="bg-surface"
+                  color="text-primary"
+                  borderColor="border-subtle"
+                  _hover={{ borderColor: "border-hover" }}
                   _focus={{
-                    borderColor: BRAND_COLOR,
-                    boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                    borderColor: "brand-primary",
+                    boxShadow: "focus-glow",
+                  }}
+                  sx={{
+                    "::-webkit-calendar-picker-indicator": {
+                      filter: "invert(0.8)",
+                    },
                   }}
                 />
               </FormControl>
               <FormControl>
-                <FormLabel fontWeight="medium">Horário de Fechamento</FormLabel>
+                <FormLabel fontWeight="medium" color="text-secondary">
+                  Horário de Fechamento
+                </FormLabel>
                 <Input
                   type="time"
                   value={closeTime}
                   onChange={(e) => setCloseTime(e.target.value)}
                   size="lg"
+                  bg="bg-surface"
+                  color="text-primary"
+                  borderColor="border-subtle"
+                  _hover={{ borderColor: "border-hover" }}
                   _focus={{
-                    borderColor: BRAND_COLOR,
-                    boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                    borderColor: "brand-primary",
+                    boxShadow: "focus-glow",
+                  }}
+                  sx={{
+                    "::-webkit-calendar-picker-indicator": {
+                      filter: "invert(0.8)",
+                    },
                   }}
                 />
               </FormControl>
-            </HStack>
-            <Flex justify="flex-end" pt={4}>
+            </Flex>
+
+            <Flex justify={{ base: "stretch", sm: "flex-end" }} pt={4}>
               <Button
+                w={{ base: "full", sm: "auto" }}
                 size="lg"
-                bg={BRAND_COLOR}
+                bg="brand-primary"
                 color="white"
-                _hover={{ bg: BRAND_HOVER }}
+                _hover={{ bg: "brand-hover" }}
+                _active={{ bg: "brand-active" }}
                 leftIcon={<Save size={18} />}
                 onClick={() =>
                   mutation.mutate({ name, openTime, closeTime, slug, openDays })
@@ -314,6 +412,23 @@ function ConfiguracoesForm({
             </Flex>
           </VStack>
         </Box>
+      </Box>
+
+      {/* BOTÃO DE SAIR DA CONTA - EXCLUSIVO PARA O MOBILE */}
+      <Box display={{ base: "block", md: "none" }} mt={6}>
+        <Button
+          w="full"
+          size="lg"
+          variant="outline"
+          color="status-error"
+          borderColor="status-error"
+          bg="transparent"
+          _hover={{ bg: "rgba(248, 81, 73, 0.1)" }}
+          leftIcon={<LogOut size={20} />}
+          onClick={signOut}
+        >
+          Sair da Conta
+        </Button>
       </Box>
     </Box>
   );

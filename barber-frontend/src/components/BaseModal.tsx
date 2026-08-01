@@ -12,9 +12,6 @@ import {
 } from "@chakra-ui/react";
 import { ReactNode } from "react";
 
-const BRAND_COLOR = "#904D22";
-const BRAND_HOVER = "#733c19";
-
 interface BaseModalProps {
   isOpen: boolean;
   onClose: () => void;
@@ -37,25 +34,38 @@ export function BaseModal({
   return (
     <Modal isOpen={isOpen} onClose={onClose} size="md">
       <ModalOverlay />
-      <ModalContent>
-        <ModalHeader>{title}</ModalHeader>
-        <ModalCloseButton />
+      <ModalContent
+        bg="bg-surface"
+        borderColor="border-subtle"
+        borderWidth="1px"
+        shadow="card-shadow"
+      >
+        <ModalHeader color="text-primary">{title}</ModalHeader>
+        <ModalCloseButton color="text-secondary" />
 
         <ModalBody>{children}</ModalBody>
 
-        <ModalFooter>
+        <ModalFooter
+          bg="bg-surface-secondary"
+          borderTopWidth="1px"
+          borderColor="border-subtle"
+          borderBottomRadius="md"
+        >
           <Button
             variant="ghost"
             mr={3}
             onClick={onClose}
             isDisabled={isLoading}
+            color="text-primary"
+            _hover={{ bg: "bg-surface-hover" }}
           >
             Cancelar
           </Button>
           <Button
-            bg={BRAND_COLOR}
+            bg="brand-primary"
             color="white"
-            _hover={{ bg: BRAND_HOVER }}
+            _hover={{ bg: "brand-hover" }}
+            _active={{ bg: "brand-active" }}
             onClick={onSave}
             isLoading={isLoading}
           >

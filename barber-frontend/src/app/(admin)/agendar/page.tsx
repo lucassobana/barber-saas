@@ -33,12 +33,6 @@ import {
 import { api } from "@/lib/api";
 import { AxiosError } from "axios";
 
-// === CORES DA MARCA (PróximoCorte) ===
-const BRAND_COLOR = "#904D22";
-const BRAND_HOVER = "#733c19";
-const BRAND_LIGHT = "#FDF8F5";
-const TEXT_DARK = "#3D3D3D";
-
 // --- Tipagens ---
 interface Service {
   id: string;
@@ -212,14 +206,14 @@ export default function PublicBookingPage() {
 
   if (isLoading)
     return (
-      <Center h="100vh" bg={BRAND_LIGHT}>
-        <Spinner size="xl" color={BRAND_COLOR} thickness="4px" />
+      <Center h="100vh" bg="bg-app">
+        <Spinner size="xl" color="brand-primary" thickness="4px" />
       </Center>
     );
   if (isError || !barbershop)
     return (
-      <Center h="100vh" bg={BRAND_LIGHT}>
-        <Text color="red.500" fontWeight="medium">
+      <Center h="100vh" bg="bg-app">
+        <Text color="status-error" fontWeight="medium">
           Barbearia não encontrada.
         </Text>
       </Center>
@@ -227,34 +221,38 @@ export default function PublicBookingPage() {
 
   if (isSuccess) {
     return (
-      <Center h="100vh" bg={BRAND_LIGHT} p={4}>
+      <Center h="100vh" bg="bg-app" p={4}>
         <VStack
           spacing={6}
-          bg="white"
-          p={8}
+          bg="bg-surface"
+          p={{ base: 6, md: 8 }}
           borderRadius="xl"
-          shadow="md"
+          shadow="card-shadow"
           textAlign="center"
           maxW="md"
           w="full"
           borderTopWidth="4px"
-          borderColor={BRAND_COLOR}
+          borderColor="brand-primary"
         >
-          <Center w={16} h={16} bg="#F3EAE3" borderRadius="full">
-            <Icon as={CheckCircle} size={32} color={BRAND_COLOR} />
+          <Center w={16} h={16} bg="brand-soft" borderRadius="full">
+            <Icon as={CheckCircle} size={32} color="brand-primary" />
           </Center>
-          <Heading size="lg" color={TEXT_DARK}>
+          <Heading size="lg" color="text-primary">
             Tudo Certo!
           </Heading>
-          <Text color="gray.600">
-            Seu horário foi agendado com sucesso na <b>{barbershop.name}</b>. Te
-            esperamos lá!
+          <Text color="text-secondary">
+            Seu horário foi agendado com sucesso na{" "}
+            <Text as="span" color="text-primary" fontWeight="bold">
+              {barbershop.name}
+            </Text>
+            . Te esperamos lá!
           </Text>
           <Button
             w="full"
-            bg={BRAND_COLOR}
+            bg="brand-primary"
             color="white"
-            _hover={{ bg: BRAND_HOVER }}
+            _hover={{ bg: "brand-hover" }}
+            _active={{ bg: "brand-active" }}
             mt={4}
             size="lg"
             onClick={() => window.location.reload()}
@@ -269,42 +267,42 @@ export default function PublicBookingPage() {
   const selectedService = barbershop.services.find((s) => s.id === serviceId);
 
   return (
-    <Box minH="100vh" bg={BRAND_LIGHT} py={10} px={4}>
+    <Box minH="100vh" bg="bg-app" py={{ base: 6, md: 10 }} px={4}>
       <Container
         maxW="md"
-        bg="white"
-        p={8}
+        bg="bg-surface"
+        p={{ base: 5, sm: 8 }}
         borderRadius="2xl"
-        shadow="lg"
+        shadow="card-shadow"
         borderWidth="1px"
-        borderColor="gray.100"
+        borderColor="border-subtle"
       >
         <VStack spacing={6} align="stretch">
-          {/* HEADER COM A LOGO */}
+          {/* HEADER COM A LOGO RESPONSIVA */}
           <Box textAlign="center" mb={4}>
             <Flex justify="center" mb={6}>
               <Image
                 src="/ProximoCorteLogo.png"
                 alt="Logo PróximoCorte"
-                h="160px"
+                h={{ base: "120px", md: "160px" }} // Menor no celular
                 objectFit="contain"
                 fallback={
-                  <Heading size="lg" color={TEXT_DARK}>
+                  <Heading size="lg" color="text-primary">
                     PróximoCorte
                   </Heading>
                 }
               />
             </Flex>
 
-            <Heading size="md" color={TEXT_DARK} mb={2}>
+            <Heading size="md" color="text-primary" mb={2}>
               Agendamento - {barbershop.name}
             </Heading>
-            <Text color="gray.500" fontSize="sm">
+            <Text color="text-secondary" fontSize="sm">
               Preencha os dados abaixo para reservar o seu horário.
             </Text>
           </Box>
 
-          <Divider borderColor="gray.200" />
+          <Divider borderColor="border-subtle" />
 
           <VStack spacing={5} align="stretch">
             <FormControl isRequired>
@@ -312,20 +310,29 @@ export default function PublicBookingPage() {
                 display="flex"
                 alignItems="center"
                 gap={2}
-                color={TEXT_DARK}
+                color="text-primary"
                 fontWeight="semibold"
               >
-                <Icon as={Scissors} size={18} color={BRAND_COLOR} /> Serviço
+                <Icon as={Scissors} size={18} color="brand-primary" /> Serviço
               </FormLabel>
               <Select
                 placeholder="Escolha um serviço"
                 value={serviceId}
                 onChange={(e) => setServiceId(e.target.value)}
-                bg="gray.50"
-                borderColor="gray.200"
+                bg="bg-surface-secondary"
+                borderColor="border-subtle"
+                color="text-primary"
+                size="lg"
+                _hover={{ borderColor: "border-hover" }}
                 _focus={{
-                  borderColor: BRAND_COLOR,
-                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                  borderColor: "brand-primary",
+                  boxShadow: "focus-glow",
+                }}
+                sx={{
+                  "> option": {
+                    bg: "bg-surface",
+                    color: "text-primary",
+                  },
                 }}
               >
                 {barbershop.services.map((s) => (
@@ -341,20 +348,29 @@ export default function PublicBookingPage() {
                 display="flex"
                 alignItems="center"
                 gap={2}
-                color={TEXT_DARK}
+                color="text-primary"
                 fontWeight="semibold"
               >
-                <Icon as={User} size={18} color={BRAND_COLOR} /> Profissional
+                <Icon as={User} size={18} color="brand-primary" /> Profissional
               </FormLabel>
               <Select
                 placeholder="Escolha o barbeiro"
                 value={barberId}
                 onChange={(e) => setBarberId(e.target.value)}
-                bg="gray.50"
-                borderColor="gray.200"
+                bg="bg-surface-secondary"
+                borderColor="border-subtle"
+                color="text-primary"
+                size="lg"
+                _hover={{ borderColor: "border-hover" }}
                 _focus={{
-                  borderColor: BRAND_COLOR,
-                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                  borderColor: "brand-primary",
+                  boxShadow: "focus-glow",
+                }}
+                sx={{
+                  "> option": {
+                    bg: "bg-surface",
+                    color: "text-primary",
+                  },
                 }}
               >
                 {barbershop.barbers.map((b) => (
@@ -366,26 +382,35 @@ export default function PublicBookingPage() {
             </FormControl>
           </VStack>
 
-          <Flex gap={4} mt={2}>
+          {/* DATA E HORA: Lado a lado no Tablet/Desktop, Empilhados no Celular */}
+          <Flex direction={{ base: "column", sm: "row" }} gap={4} mt={2}>
             <FormControl isRequired>
               <FormLabel
                 display="flex"
                 alignItems="center"
                 gap={2}
-                color={TEXT_DARK}
+                color="text-primary"
                 fontWeight="semibold"
               >
-                <Icon as={Calendar} size={18} color={BRAND_COLOR} /> Data
+                <Icon as={Calendar} size={18} color="brand-primary" /> Data
               </FormLabel>
               <Input
                 type="date"
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
-                bg="gray.50"
-                borderColor="gray.200"
+                bg="bg-surface-secondary"
+                borderColor="border-subtle"
+                color="text-primary"
+                size="lg"
+                _hover={{ borderColor: "border-hover" }}
                 _focus={{
-                  borderColor: BRAND_COLOR,
-                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                  borderColor: "brand-primary",
+                  boxShadow: "focus-glow",
+                }}
+                sx={{
+                  "::-webkit-calendar-picker-indicator": {
+                    filter: "invert(0.8)",
+                  },
                 }}
               />
             </FormControl>
@@ -394,22 +419,31 @@ export default function PublicBookingPage() {
                 display="flex"
                 alignItems="center"
                 gap={2}
-                color={TEXT_DARK}
+                color="text-primary"
                 fontWeight="semibold"
               >
-                <Icon as={Clock} size={18} color={BRAND_COLOR} /> Hora
+                <Icon as={Clock} size={18} color="brand-primary" /> Hora
               </FormLabel>
               <Select
                 placeholder="Horário"
                 value={startTime}
                 onChange={(e) => setStartTime(e.target.value)}
-                bg="gray.50"
-                borderColor="gray.200"
+                bg="bg-surface-secondary"
+                borderColor="border-subtle"
+                color="text-primary"
+                size="lg"
+                _hover={{ borderColor: "border-hover" }}
                 _focus={{
-                  borderColor: BRAND_COLOR,
-                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                  borderColor: "brand-primary",
+                  boxShadow: "focus-glow",
                 }}
                 isDisabled={!isOpen || !date}
+                sx={{
+                  "> option": {
+                    bg: "bg-surface",
+                    color: "text-primary",
+                  },
+                }}
               >
                 {timeSlots.map((t) => (
                   <option key={t} value={t}>
@@ -419,7 +453,7 @@ export default function PublicBookingPage() {
               </Select>
               {!isOpen && date && (
                 <Text
-                  color="red.500"
+                  color="status-error"
                   fontSize="xs"
                   mt={1.5}
                   fontWeight="medium"
@@ -430,22 +464,25 @@ export default function PublicBookingPage() {
             </FormControl>
           </Flex>
 
-          <Divider borderColor="gray.200" mt={2} mb={2} />
+          <Divider borderColor="border-subtle" mt={2} mb={2} />
 
           <VStack spacing={5} align="stretch">
             <FormControl isRequired>
-              <FormLabel color={TEXT_DARK} fontWeight="semibold">
+              <FormLabel color="text-primary" fontWeight="semibold">
                 Seu Nome
               </FormLabel>
               <Input
                 placeholder="Ex: João Silva"
                 value={clientName}
                 onChange={(e) => setClientName(e.target.value)}
-                bg="gray.50"
-                borderColor="gray.200"
+                bg="bg-surface-secondary"
+                borderColor="border-subtle"
+                color="text-primary"
+                size="lg"
+                _hover={{ borderColor: "border-hover" }}
                 _focus={{
-                  borderColor: BRAND_COLOR,
-                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                  borderColor: "brand-primary",
+                  boxShadow: "focus-glow",
                 }}
               />
             </FormControl>
@@ -454,21 +491,24 @@ export default function PublicBookingPage() {
                 display="flex"
                 alignItems="center"
                 gap={2}
-                color={TEXT_DARK}
+                color="text-primary"
                 fontWeight="semibold"
               >
-                <Icon as={Phone} size={18} color={BRAND_COLOR} /> WhatsApp
+                <Icon as={Phone} size={18} color="brand-primary" /> WhatsApp
               </FormLabel>
               <Input
                 type="tel"
                 placeholder="Ex: 11999999999"
                 value={clientPhone}
                 onChange={(e) => setClientPhone(e.target.value)}
-                bg="gray.50"
-                borderColor="gray.200"
+                bg="bg-surface-secondary"
+                borderColor="border-subtle"
+                color="text-primary"
+                size="lg"
+                _hover={{ borderColor: "border-hover" }}
                 _focus={{
-                  borderColor: BRAND_COLOR,
-                  boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                  borderColor: "brand-primary",
+                  boxShadow: "focus-glow",
                 }}
               />
             </FormControl>
@@ -476,18 +516,22 @@ export default function PublicBookingPage() {
 
           {selectedService && (
             <Box
-              bg="#F9F2ED"
+              bg="brand-soft"
               p={4}
               borderRadius="lg"
               mt={2}
               borderWidth="1px"
-              borderColor="#EADCCF"
+              borderColor="border-subtle"
             >
               <Flex justify="space-between" align="center">
-                <Text color={TEXT_DARK} fontWeight="medium">
+                <Text
+                  color="text-primary"
+                  fontWeight="medium"
+                  fontSize={{ base: "sm", sm: "md" }}
+                >
                   Total a pagar no local:
                 </Text>
-                <Heading size="md" color={BRAND_COLOR}>
+                <Heading size="md" color="brand-primary">
                   {formatPrice(selectedService.price)}
                 </Heading>
               </Flex>
@@ -495,15 +539,18 @@ export default function PublicBookingPage() {
           )}
 
           <Button
+            w="full"
             size="lg"
-            bg={BRAND_COLOR}
+            bg="brand-primary"
             color="white"
             _hover={{
-              bg: BRAND_HOVER,
+              bg: "brand-hover",
               transform: "translateY(-1px)",
-              shadow: "md",
             }}
-            _active={{ transform: "translateY(0)" }}
+            _active={{
+              bg: "brand-active",
+              transform: "translateY(0)",
+            }}
             transition="all 0.2s"
             onClick={handleSubmit}
             isLoading={bookMutation.isPending}
@@ -512,6 +559,7 @@ export default function PublicBookingPage() {
             mt={4}
             h="56px"
             fontSize="lg"
+            shadow="card-shadow"
           >
             Confirmar Agendamento
           </Button>

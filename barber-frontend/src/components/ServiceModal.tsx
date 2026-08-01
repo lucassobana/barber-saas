@@ -14,8 +14,6 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { api } from "@/lib/api";
 import { BaseModal } from "./BaseModal";
 
-const BRAND_COLOR = "#904D22";
-
 export interface Service {
   id: string;
   name: string;
@@ -92,20 +90,24 @@ export function ServiceModal({ isOpen, onClose, service }: ServiceModalProps) {
     >
       <VStack spacing={4}>
         <FormControl isRequired>
-          <FormLabel>Nome do serviço</FormLabel>
+          <FormLabel color="text-primary">Nome do serviço</FormLabel>
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="Ex: Corte Clássico"
+            bg="bg-surface-secondary"
+            borderColor="border-subtle"
+            color="text-primary"
+            _hover={{ borderColor: "border-hover" }}
             _focus={{
-              borderColor: BRAND_COLOR,
-              boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+              borderColor: "brand-primary",
+              boxShadow: `0 0 0 1px {brand-primary}`,
             }}
           />
         </FormControl>
 
         <FormControl isRequired>
-          <FormLabel>Preço (R$)</FormLabel>
+          <FormLabel color="text-primary">Preço (R$)</FormLabel>
           <NumberInput
             min={0}
             precision={2}
@@ -115,16 +117,20 @@ export function ServiceModal({ isOpen, onClose, service }: ServiceModalProps) {
           >
             <NumberInputField
               placeholder="Ex: 45.00"
+              bg="bg-surface-secondary"
+              borderColor="border-subtle"
+              color="text-primary"
+              _hover={{ borderColor: "border-hover" }}
               _focus={{
-                borderColor: BRAND_COLOR,
-                boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                borderColor: "brand-primary",
+                boxShadow: `0 0 0 1px {brand-primary}`,
               }}
             />
           </NumberInput>
         </FormControl>
 
         <FormControl isRequired>
-          <FormLabel>Duração (minutos)</FormLabel>
+          <FormLabel color="text-primary">Duração (minutos)</FormLabel>
           <NumberInput
             min={0}
             step={5}
@@ -133,9 +139,13 @@ export function ServiceModal({ isOpen, onClose, service }: ServiceModalProps) {
           >
             <NumberInputField
               placeholder="Ex: 40"
+              bg="bg-surface-secondary"
+              borderColor="border-subtle"
+              color="text-primary"
+              _hover={{ borderColor: "border-hover" }}
               _focus={{
-                borderColor: BRAND_COLOR,
-                boxShadow: `0 0 0 1px ${BRAND_COLOR}`,
+                borderColor: "brand-primary",
+                boxShadow: `0 0 0 1px {brand-primary}`,
               }}
             />
           </NumberInput>
