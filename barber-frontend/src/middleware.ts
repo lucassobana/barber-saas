@@ -2,6 +2,11 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
+  // 1. Redireciona a raiz (/) direto para o login
+  if (request.nextUrl.pathname === "/") {
+    return NextResponse.redirect(new URL("/login", request.url));
+  }
+
   const token = request.cookies.get("@BarberSaaS:token")?.value;
 
   // Lista de rotas que qualquer pessoa pode acessar sem estar logada
@@ -12,12 +17,12 @@ export function middleware(request: NextRequest) {
     request.nextUrl.pathname.startsWith(route),
   );
 
-  // 1. Se NÃO tem token e NÃO está em uma rota pública
+  // 2. Se NÃO tem token e NÃO está em uma rota pública
   if (!token && !isPublicRoute) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
-  // 2. Se TEM token e tenta acessar o login (ou a criação de senha novamente)
+  // 3. Se TEM token e tenta acessar o login (ou a criação de senha novamente)
   if (token && isPublicRoute) {
     // Redireciona para a agenda (e não para o dashboard)
     return NextResponse.redirect(new URL("/agenda", request.url));
